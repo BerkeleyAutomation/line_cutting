@@ -7,6 +7,9 @@ import multiprocessing
 import numpy as np
 import sys
 
+"""
+Launching this script creates a GUI that subscribes to PSM1's position_cartesian_current topic and can write this information to file.
+"""
 
 def startCallback():
     global prs

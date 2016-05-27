@@ -5,15 +5,19 @@ import numpy as np
 import PyKDL
 import multiprocessing
 import tfx
-import fitplane
 
 
 def get_frame(pos):
+    """
+    Takes in a 3d Robot frame point and returns a tfx pose
+    """
     rot = [0.704583065311, 0.590342398526, 0.387353243821, 0.0708238736684]
     return tfx.pose(pos[0:3], rot)
 
 def camera_to_robot_frame(point, cmat):
-
+    """
+    Takes in a 3d point and a rigid transformation matrix, and outputs the result.
+    """
     pt = np.ones(4)
     pt[:3] = point
     pred = cmat * np.matrix(pt).T
@@ -34,6 +38,9 @@ def convertStereo(u, v, disparity, info):
     return cameraPoint
 
 def pixels_to_3D(left_corners, right_corners, info):
+    """
+    Takes in two lists of pixel coordinates and camera info as a dictionary and outputs 3d points in camera frame.
+    """
     pts3d = get_points_3d(left_corners, right_corners)
     self.pts = [(p.point.x, p.point.y, p.point.z) for p in pts3d]
     return self.pts

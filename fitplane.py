@@ -6,6 +6,9 @@ import PyKDL
 from scipy.interpolate import UnivariateSpline
 
 def load_points():
+    """
+    Load points in the robot frame that were stored to file.
+    """
     lst = []
     f3 = open("calibration/psm1_calibration.p", "rb")
     pos1 = pickle.load(f3)
@@ -19,6 +22,9 @@ def load_points():
             return np.matrix(lst)
 
 def least_squares_plane_normal(points_3d):
+    """
+    Fit a plane to 3d points
+    """
     x_list = points_3d[:,0]
     y_list = points_3d[:,1]
     z_list = points_3d[:,2]
@@ -29,6 +35,9 @@ def least_squares_plane_normal(points_3d):
     return plane
 
 def project_onto_plane(plane, point):
+    """
+    Takes an input point, and modifies the z coordinate to lie on the plane
+    """
     pt = np.array(point).reshape(3, 1)
     pt[2, 0] = 1
     new_z = plane * pt
