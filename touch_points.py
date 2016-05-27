@@ -63,12 +63,29 @@ def get_points_3d(left_points, right_points, info):
         points_3d.append(pt)
     return points_3d
 
+def load_camera_info():
+    info = {}
+    f = open("calibration_data/camera_right.p")
+    info['r'] = pickle.load(f)
+    f.close()
+    f = open("calibration_data/camera_left.p")
+    info['l'] = pickle.load(f)
+    f.close()
+    return info
 
-if __name__ == "__main__":
-    psm1 = robot("PSM1")
+def load_camera_matrix():
     f3 = open("calibration_data/camera_matrix.p", "rb")
     cmat = pickle.load(f3)
     f3.close()
+    return cmat
+
+
+if __name__ == "__main__":
+
+    #initialization
+    psm1 = robot("PSM1")
+    cmat = load_camera_matrix()
+    info = load_camera_info()
 
     lpixels, rpixels = [],[]
     info = {}
