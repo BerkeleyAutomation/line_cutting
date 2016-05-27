@@ -97,5 +97,3 @@ if __name__ == "__main__":
     for point in pts:
         psm1.move_cartesian_frame(camera_to_robot_frame(point))
         time.sleep(2)
-
-
