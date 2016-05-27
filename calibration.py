@@ -34,7 +34,7 @@ def callback_PSM1_actual(data):
     position = data.position
     psm1_pose = [position.x, position.y, position.z]
     print psm1_pose
-    f = open("calibration_data/psm1_calibration.p", "a")
+    f = open("calibration_data/psm1_calibration_line_cutting.p", "a")
     pickle.dump(psm1_pose, f)
     f.close()
     sub.unregister()
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     sub = None
     prs = []
 
-    open('calibration_data/psm1_calibration.p', 'w+').close()
+    open('calibration_data/psm1_calibration_line_cutting.p', 'w+').close()
 
     top = Tkinter.Tk()
     top.title('Calibration')

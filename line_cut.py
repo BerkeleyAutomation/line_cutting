@@ -15,8 +15,8 @@ def initialize():
     global psm1_position, psm2_position
     psm2_initial = [-0.0912484814441, 0.0794414679811, -0.0736081506167, 0.888720223413, -0.254590620512, -0.302364852004, -0.232240127275]
     psm1_initial = [0.0298111217581, 0.0255537141169, -0.111452040502, 0.617571885272, 0.59489495214, 0.472153066551, 0.204392867261]
-    start_frame1 = get_frame(psm1_initial)
-    start_frame2 = get_frame2(psm2_initial)
+    start_frame1 = get_frame_psm1(psm1_initial)
+    start_frame2 = get_frame_psm2(psm2_initial)
     psm1.move_cartesian_frame(start_frame1)
     # psm2.move_cartesian_frame(start_frame2)
     psm1.open_gripper(80)

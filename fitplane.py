@@ -10,7 +10,7 @@ def load_points():
     Load points in the robot frame that were stored to file.
     """
     lst = []
-    f3 = open("calibration/psm1_calibration.p", "rb")
+    f3 = open("calibration_data/psm1_calibration_line_cutting.p", "rb")
     pos1 = pickle.load(f3)
     lst.append(pos1)
     while True:
