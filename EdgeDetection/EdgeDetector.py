@@ -47,7 +47,7 @@ def segment_edge(img,
 		plt.xticks([]), plt.yticks([])
 		plt.show()
 
-	return 255*(ilaplacian > confidence)
+	return (ilaplacian > confidence)
 
 """
 Bounding Box mask
@@ -147,21 +147,32 @@ def get_secant_line(img, xs, ys, n=100, plot=False, flag=True):
 if __name__ == "__main__":
 
 	#right circle
-	img = cv2.imread('right.jpg',0)
+	img1 = cv2.imread('right.jpg',0)
 
 	#hard-coded image workspace right
-	workspacer = workspace_mask([215, 1500, 300,  900], plot=True)
+	workspacer = workspace_mask([215, 1300, 300,  500], plot=True)
 
-	get_secant_line(workspacer(segment_edge(img, plot=True, confidence=220, gsigma=20)), 991, 394, plot=True)
+	imgER = workspacer(segment_edge(img1, plot=True, confidence=230, gsigma=20))
 
-	
-	
+	maskedR = np.multiply(img1, imgER).astype('uint8')
+
+	print maskedR, img1
+
 	#left circle
-	img = cv2.imread('left.jpg',0)
+	img2 = cv2.imread('left.jpg',0)
 
-	workspacel = workspace_mask([215, 1500, 300,  900], plot=True)
+	workspacel = workspace_mask([215, 1300, 300,  500], plot=True)
 
-	get_secant_line(workspacel(segment_edge(img, plot=True, confidence=200, gsigma=20)), 991, 394, plot=True)
+	imgEL = workspacel(segment_edge(img2, plot=True, confidence=230, gsigma=20))
+
+	maskedL = np.multiply(img2, imgER).astype('uint8')
+
+	stereo = cv2.StereoBM(cv2.STEREO_BM_BASIC_PRESET,ndisparities=16)
+	disparity = stereo.compute(maskedL, maskedR)
+
+	plt.imshow(disparity,'gray')
+	plt.show()
+	
 	
 	
 
