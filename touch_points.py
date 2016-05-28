@@ -5,6 +5,8 @@ import numpy as np
 import PyKDL
 import multiprocessing
 import tfx
+import image_geometry
+from geometry_msgs.msg import PointStamped, Point
 
 
 def get_frame(pos):
@@ -41,9 +43,9 @@ def pixels_to_3D(left_corners, right_corners, info):
     """
     Takes in two lists of pixel coordinates and camera info as a dictionary and outputs 3d points in camera frame.
     """
-    pts3d = get_points_3d(left_corners, right_corners)
-    self.pts = [(p.point.x, p.point.y, p.point.z) for p in pts3d]
-    return self.pts
+    pts3d = get_points_3d(left_corners, right_corners, info)
+    pts = [(p.point.x, p.point.y, p.point.z) for p in pts3d]
+    return pts
 
 def get_points_3d(left_points, right_points, info):
     """ this method assumes that corresponding points are in the right order
@@ -87,13 +89,15 @@ if __name__ == "__main__":
     cmat = load_camera_matrix()
     info = load_camera_info()
 
-    lpixels, rpixels = [],[]
-    info = {}
+    rpixels, lpixels = [(900, 473.38426456409923)], [(988.16895235719585, 467.38426456409923)]
+    rpixels, lpixels = [[900,488]],[[971,482]]
+
+    
+
 
     pts = pixels_to_3D(lpixels, rpixels, info)
 
-    pts = []
-
     for point in pts:
-        psm1.move_cartesian_frame(camera_to_robot_frame(point, cmat))
+        print camera_to_robot_frame(point, cmat)
+        psm1.move_cartesian_frame(get_frame(camera_to_robot_frame(point, cmat)))
         time.sleep(2)

@@ -95,7 +95,7 @@ Given a point x, y this gets the secant line (as an sklearn model)
 
 args are normal, y is x/ x is y in code
 """
-def get_secant_line(img, xs, ys, n=100, plot=False):
+def get_secant_line(img, xs, ys, n=100, plot=False, flag=True):
 	points = []
 	for x in range( max(xs-n,0), xs+n):
 		for y in range( max(ys-n,0), ys+n):
@@ -119,13 +119,16 @@ def get_secant_line(img, xs, ys, n=100, plot=False):
 	regr = linear_model.LinearRegression()
 
 	# Train the model using the data
-	regr.fit(data_matrix[:,[0]], data_matrix[:,[1]])
+	if flag == True:
+		regr.fit(data_matrix[:,[1]], data_matrix[:,[0]])
+	else:
+		regr.fit(data_matrix[:,[0]], data_matrix[:,[1]])
 
 	#if plotting is on
 	if plot:
 		plt_img = np.copy(img)
-		for y in range(0, np.shape(img)[0]):
-			x = int(round(np.squeeze(regr.predict([y]))))
+		for x in range(0, np.shape(img)[1]):
+			y = int(round(np.squeeze(regr.predict([x]))))
 			
 			try:
 				plt_img[max(y,0),max(x,0)] = 122
@@ -144,36 +147,21 @@ def get_secant_line(img, xs, ys, n=100, plot=False):
 if __name__ == "__main__":
 
 	#right circle
-	img = cv2.imread('right_circle2.jpg',0)
+	img = cv2.imread('right.jpg',0)
 
 	#hard-coded image workspace right
-	workspacer = workspace_mask([450, 1340, 350, 1000], plot=True)
+	workspacer = workspace_mask([215, 1500, 300,  900], plot=True)
 
-	get_secant_line(workspacer(segment_edge(img, plot=True)), 991, 394, plot=True)
-
-
-	#left circle
-	img = cv2.imread('left_circle2.jpg',0)
-
-	workspacel = workspace_mask([450, 1340, 350, 1000], plot=True)
-
-	get_secant_line(workspacel(segment_edge(img, plot=True)), 1280, 633, plot=True)
+	get_secant_line(workspacer(segment_edge(img, plot=True, confidence=220, gsigma=20)), 991, 394, plot=True)
 
 	
+	
+	#left circle
+	img = cv2.imread('left.jpg',0)
 
-	#right line
-	img = cv2.imread('right_line3.jpg',0)
+	workspacel = workspace_mask([215, 1500, 300,  900], plot=True)
 
-	workspacel = workspace_mask([100, 1400, 300, 700], plot=True)
-
-	get_secant_line(workspacel(segment_edge(img, plot=True)), 710, 496, n=200, plot=True)
-
-
-	#left line
-	img = cv2.imread('left_line3.jpg',0)
-
-	workspacel = workspace_mask([100, 1400, 300, 700], plot=True)
-
-	get_secant_line(workspacel(segment_edge(img, plot=True)), 454, 470, n=200, plot=True)
-
+	get_secant_line(workspacel(segment_edge(img, plot=True, confidence=200, gsigma=20)), 991, 394, plot=True)
+	
+	
 
