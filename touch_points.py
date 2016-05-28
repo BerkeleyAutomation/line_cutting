@@ -92,11 +92,12 @@ if __name__ == "__main__":
     rpixels, lpixels = [(900, 473.38426456409923)], [(988.16895235719585, 467.38426456409923)]
     rpixels, lpixels = [[900,488]],[[971,473]]
     
-    rpixels, lpixels = [[900,488]],[[971,473]]
+    rpixels, lpixels = [(900, 476.08000894473696)], [(970, 476.18027034907834)]
 
     pts = pixels_to_3D(lpixels, rpixels, info)
 
     for point in pts:
+        point = [-0.02753644, -0.003607055, 0.14450444]
         print camera_to_robot_frame(point, cmat)
         psm1.move_cartesian_frame(get_frame(camera_to_robot_frame(point, cmat)))
         time.sleep(2)
