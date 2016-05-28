@@ -207,37 +207,58 @@ def getStereoPairPointCloud(imgL, imgR, calibration_data='../calibration_data/ca
 
 	sparseline[:,2] = np.mean(sparseline[:,2])
 
+	print sparseline[:,2]
+	print np.mean(sparseline[:,2])
+
+	plt.figure()
+	plt.imshow(disparity,cmap = 'gray')
+	plt.show()
+
 	out = cv2.perspectiveTransform(sparseline[None, :, :], Q)
 	return -np.squeeze(out)
 
 if __name__ == "__main__":
 
+
 	#right circle
 	img1 = cv2.imread('right1.jpg',0)
 
+	fig = plt.figure()
+	plt.imshow(img1,cmap = 'gray')
+	
+	def onclick(event):
+		print('button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
+          (event.button, event.x, event.y, event.xdata, event.ydata))
 
+	cid = fig.canvas.mpl_connect('button_press_event', onclick)
+
+	plt.show()
+
+
+
+	"""
 	#hard-coded image workspace right
-	workspacer = workspace_mask([350, 1300, 300,  500])
+	workspacer = workspace_mask([175, 1400, 350,  700],plot=True)
 
-	imgER = workspacer(segment_edge(img1, confidence=200, gsigma=20))
+	imgER = workspacer(segment_edge(img1, confidence=200, gsigma=10,plot=True))
 
 	maskedR = np.multiply(img1, imgER).astype('uint8')
 
 
-
 	img2 = cv2.imread('left1.jpg',0)
 
-	workspacel = workspace_mask([350, 1300, 300,  500])
+	workspacel = workspace_mask([175, 1400, 350,  700],plot=True)
 
-	imgEL = workspacel(segment_edge(img2, confidence=200, gsigma=20))
+	imgEL = workspacel(segment_edge(img2, confidence=200, gsigma=10,plot=True))
 
 	maskedL = np.multiply(img2, imgER).astype('uint8')
 
 
 
-	outs = getStereoPairPointCloud(maskedL, maskedR)
+	#outs = getStereoPairPointCloud(maskedL, maskedR)
 
-	print get_line(outs)
+	#print get_line(outs)
+	"""
 
 	
 
