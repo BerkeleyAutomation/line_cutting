@@ -11,9 +11,7 @@ import pickle
 from sensor_msgs.msg import Image, CameraInfo
 from geometry_msgs.msg import PoseStamped
 
-from EdgeDetector import *
-
-class ROSEdgeDetector:
+class ImageSaver:
 
     def __init__(self):
         self.right_image = None
@@ -43,62 +41,34 @@ class ROSEdgeDetector:
         if self.info['l']:
             return
         self.info['l'] = msg
+        f = open("calibration_data/camera_left.p", "w")
+        pickle.dump(msg, f)
+        f.close()
 
     def right_info_callback(self, msg):
         if self.info['r']:
             return
         self.info['r'] = msg
+        f = open("calibration_data/camera_right.p", "w")
+        pickle.dump(msg, f)
+        f.close()
 
     def right_image_callback(self, msg):
-        print "right"
         if rospy.is_shutdown():
             return
         self.right_image = self.bridge.imgmsg_to_cv2(msg, "rgb8")
+        scipy.misc.imsave('images/right' + str(self.rcounter) + '.jpg', self.right_image)
         self.rcounter += 1
 
 
     def left_image_callback(self, msg):
-        print "left"
         if rospy.is_shutdown():
             return
         self.left_image = self.bridge.imgmsg_to_cv2(msg, "rgb8")
+        scipy.misc.imsave('images/left' + str(self.lcounter) + '.jpg', self.left_image)
         self.lcounter += 1
-        if self.right_image != None:
-            self.process_image()
-
-    def process_image(self):
-        right = cv2.cvtColor(self.right_image,cv2.COLOR_BGR2GRAY)
-        left = cv2.cvtColor(self.left_image, cv2.COLOR_BGR2GRAY)
-
-        workspacer = workspace_mask([215, 1500, 300,  900], plot=False)
-        right_edge = get_secant_line(workspacer(segment_edge(right, plot=False, confidence=220, gsigma=20)), 991, 394, plot=False, flag=True)
-
-        x1 = 700
-        y1 = right_edge.predict(x1)[0,0]
-
-
-        workspacel = workspace_mask([215, 1500, 300,  900], plot=False)
-        left_edge = get_secant_line(workspacel(segment_edge(left, plot=False, confidence=200, gsigma=20)), 991, 394, plot=False, flag=True)
-
-        b = left_edge.predict(0)[0,0]
-        y = left_edge.predict(1000)[0,0]
-        m = (y - b)/1000.0
-
-
-        x2 = x1 + 70
-        y2 = left_edge.predict(x2)[0,0]
-
-        # y2 = y1
-        # x2 = 1.0/m * y2 - b / m
-
-        p1 = (x1, y1)
-        p2 = (x2, y2)
-
-        print p1, p2
-        
-
 
 
 if __name__ == "__main__":
-    a = ROSEdgeDetector()
+    a = ImageSaver()
 

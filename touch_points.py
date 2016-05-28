@@ -90,10 +90,9 @@ if __name__ == "__main__":
     info = load_camera_info()
 
     rpixels, lpixels = [(900, 473.38426456409923)], [(988.16895235719585, 467.38426456409923)]
-    rpixels, lpixels = [[900,488]],[[971,482]]
-
+    rpixels, lpixels = [[900,488]],[[971,473]]
     
-
+    rpixels, lpixels = [[900,488]],[[971,473]]
 
     pts = pixels_to_3D(lpixels, rpixels, info)
 
