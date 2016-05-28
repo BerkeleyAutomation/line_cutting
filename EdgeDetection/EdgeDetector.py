@@ -6,7 +6,10 @@ from endoscope images using opencv
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 from sklearn import datasets, linear_model
+from sklearn.linear_model import Ridge
+import pickle
 
 """
 This function calculates a cleaned up laplacian of the
@@ -95,7 +98,7 @@ Given a point x, y this gets the secant line (as an sklearn model)
 
 args are normal, y is x/ x is y in code
 """
-def get_secant_line(img, xs, ys, n=100, plot=False, flag=True):
+def get_secant_line2D(img, xs, ys, n=100, plot=False, flag=True):
 	points = []
 	for x in range( max(xs-n,0), xs+n):
 		for y in range( max(ys-n,0), ys+n):
@@ -144,35 +147,97 @@ def get_secant_line(img, xs, ys, n=100, plot=False, flag=True):
 
 	return regr
 
+"""
+
+"""
+def get_line(outs, k=2, step=50):
+	model = Ridge(alpha=10.0, fit_intercept=True, normalize=False, copy_X=True, max_iter=None, tol=0.001)
+	model.fit(outs[:,[1]], outs[:,0])
+	ymax = np.max(outs[:,1])
+	ymin = np.min(outs[:,1])
+	points = np.linspace(ymin,ymax,step)
+
+	output = np.zeros((step, 3))
+	for i,v in enumerate(points):
+		output[i,:] = np.array([np.squeeze(model.predict([v])),v, outs[0,2]])
+
+	fig = plt.figure()
+	ax = fig.add_subplot(111, projection='3d')
+	
+	ax.scatter(outs[:,0], outs[:,1], outs[:,2], c='b', marker='x')
+
+	ax.scatter(output[:,0], output[:,1], output[:,2], c='r')
+	plt.show()
+
+	return output
+
+"""
+Given masked images aligns two point clouds
+"""
+def getStereoPairPointCloud(imgL, imgR, calibration_data='../calibration_data/camera_left2'):
+	stereo = cv2.StereoBM(cv2.STEREO_BM_BASIC_PRESET,ndisparities=16)
+	disparity = stereo.compute(imgL, imgR)
+	
+	cF = open(calibration_data, 'rb')
+	dL = pickle.load(cF)
+
+	fx = dL['K'][0]
+	fy = dL['K'][4]
+	cx = dL['K'][2]
+	cy = dL['K'][5]
+	Tx = dL['P'][3]
+	Ty = dL['P'][7]
+	T = -Tx/fx
+
+	Q = np.zeros((4,4))
+	Q[0,0] = 1
+	Q[0,3] = -cx
+	Q[1,3] = -cy
+	Q[1,1] = 1
+	Q[2,3] = np.sqrt(fx**2 + fy**2)
+	#Q[3,3] = 1
+	Q[3,2] = -1/T
+
+	dispindices = np.where(disparity > 0)
+	N = len(dispindices[0])
+	sparseline = np.zeros((N,3))
+
+	for i in range(0,N):
+		sparseline[i,:] = np.array((dispindices[0][i], dispindices[1][i], disparity[dispindices[0][i], dispindices[1][i]]))
+
+	sparseline[:,2] = np.mean(sparseline[:,2])
+
+	out = cv2.perspectiveTransform(sparseline[None, :, :], Q)
+	return -np.squeeze(out)
+
 if __name__ == "__main__":
 
 	#right circle
-	img1 = cv2.imread('right.jpg',0)
+	img1 = cv2.imread('right1.jpg',0)
+
 
 	#hard-coded image workspace right
-	workspacer = workspace_mask([215, 1300, 300,  500], plot=True)
+	workspacer = workspace_mask([350, 1300, 300,  500])
 
-	imgER = workspacer(segment_edge(img1, plot=True, confidence=230, gsigma=20))
+	imgER = workspacer(segment_edge(img1, confidence=200, gsigma=20))
 
 	maskedR = np.multiply(img1, imgER).astype('uint8')
 
-	print maskedR, img1
 
-	#left circle
-	img2 = cv2.imread('left.jpg',0)
 
-	workspacel = workspace_mask([215, 1300, 300,  500], plot=True)
+	img2 = cv2.imread('left1.jpg',0)
 
-	imgEL = workspacel(segment_edge(img2, plot=True, confidence=230, gsigma=20))
+	workspacel = workspace_mask([350, 1300, 300,  500])
+
+	imgEL = workspacel(segment_edge(img2, confidence=200, gsigma=20))
 
 	maskedL = np.multiply(img2, imgER).astype('uint8')
 
-	stereo = cv2.StereoBM(cv2.STEREO_BM_BASIC_PRESET,ndisparities=16)
-	disparity = stereo.compute(maskedL, maskedR)
 
-	plt.imshow(disparity,'gray')
-	plt.show()
-	
-	
+
+	outs = getStereoPairPointCloud(maskedL, maskedR)
+
+	print get_line(outs)
+
 	
 
