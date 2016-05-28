@@ -11,7 +11,7 @@ import pickle
 from sensor_msgs.msg import Image, CameraInfo
 from geometry_msgs.msg import PoseStamped
 
-from EdgeDetector import *
+from EdgeDetector2 import *
 
 class ROSEdgeDetector:
 
@@ -50,7 +50,7 @@ class ROSEdgeDetector:
         self.info['r'] = msg
 
     def right_image_callback(self, msg):
-        print "right"
+        # print "right"
         if rospy.is_shutdown():
             return
         self.right_image = self.bridge.imgmsg_to_cv2(msg, "rgb8")
@@ -58,7 +58,7 @@ class ROSEdgeDetector:
 
 
     def left_image_callback(self, msg):
-        print "left"
+        # print "left"
         if rospy.is_shutdown():
             return
         self.left_image = self.bridge.imgmsg_to_cv2(msg, "rgb8")
@@ -73,32 +73,35 @@ class ROSEdgeDetector:
         workspacer = workspace_mask([215, 1500, 300,  900], plot=False)
         right_edge = get_secant_line(workspacer(segment_edge(right, plot=False, confidence=220, gsigma=20)), 991, 394, plot=False, flag=True)
 
-        x1 = 700
+        x1 = 900
         y1 = right_edge.predict(x1)[0,0]
+        p1 = (x1, y1)
 
+        print neigh.predict(p1)
 
         workspacel = workspace_mask([215, 1500, 300,  900], plot=False)
         left_edge = get_secant_line(workspacel(segment_edge(left, plot=False, confidence=200, gsigma=20)), 991, 394, plot=False, flag=True)
 
-        b = left_edge.predict(0)[0,0]
-        y = left_edge.predict(1000)[0,0]
-        m = (y - b)/1000.0
-
-
         x2 = x1 + 70
         y2 = left_edge.predict(x2)[0,0]
-
-        # y2 = y1
-        # x2 = 1.0/m * y2 - b / m
-
-        p1 = (x1, y1)
+        
         p2 = (x2, y2)
 
-        print p1, p2
+        print [p1], [p2]
         
 
 
 
 if __name__ == "__main__":
+
+    f = open("camera_chesspts.p", 'rb')
+    leftpts, rightpts = pickle.load(f)
+    f.close()
+    leftpts = leftpts.reshape((leftpts.shape[0], leftpts.shape[2]))
+    rightpts = rightpts.reshape((rightpts.shape[0], rightpts.shape[2]))
+    y = np.r_[0:leftpts.shape[0]]
+    from sklearn.neighbors import KNeighborsClassifier
+    neigh = KNeighborsClassifier(n_neighbors=1)
+
     a = ROSEdgeDetector()
 
