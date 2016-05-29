@@ -6,6 +6,7 @@ from geometry_msgs.msg import Pose
 import multiprocessing
 import numpy as np
 import sys
+from sklearn.neighbors import KNeighborsClassifier
 
 """
 Launching this script creates a GUI that subscribes to PSM1's position_cartesian_current topic and can write this information to file.
@@ -67,6 +68,14 @@ def plot_points(pts=load_robot_points()):
     # ax.set_ylim3d(-0.05, 0.05)
     # ax.set_zlim3d(0.1,0.2)
     plt.show()
+
+def knn_clasifier():
+    pts = load_robot_points()
+    y = np.r_[0:pts.shape[0]]
+    neigh = KNeighborsClassifier(n_neighbors=1)
+    neigh.fit(pts, y)
+    return neigh
+
 
 if __name__ == '__main__':
     sub = None
