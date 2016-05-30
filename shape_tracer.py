@@ -44,8 +44,6 @@ def callback_PSM1_actual(data):
 def load_robot_points():
     lst = []
     f3 = open("calibration_data/gauze_pts.p", "rb")
-    pos1 = pickle.load(f3)
-    lst.append(pos1)
     while True:
         try:
             pos2 = pickle.load(f3)
@@ -55,18 +53,22 @@ def load_robot_points():
             return np.matrix(lst)
 
 
-def plot_points(pts=load_robot_points()):
+def plot_points():
     """
     Plots points in robot_frame. Axes may need to be edited.
     """
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D
+    pts=load_robot_points()
+    if pts.shape[1] == 0:
+        print "no points to show"
+        return
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.scatter(np.array(pts[:,0]), np.array(pts[:,1]), np.array(pts[:,2]),c='r')
-    # ax.set_xlim3d(-0.1, 0)
-    # ax.set_ylim3d(-0.05, 0.05)
-    # ax.set_zlim3d(0.1,0.2)
+    ax.set_xlim3d(0, 0.2)
+    ax.set_ylim3d(-0.1, 0.1)
+    ax.set_zlim3d(-0.15,0.05)
     plt.show()
 
 def knn_clasifier():

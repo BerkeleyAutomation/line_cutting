@@ -38,7 +38,7 @@ class LeftRightState:
 
 		predictedL = []
 		for i in pointsL:
-			predictedL.append((i,np.squeeze(regrL.predict([i]))[0]))
+			predictedL.append((i,regrL.predict([i]).flatten('F')[0]))
 
 		data_matrix = np.zeros((len(self.right_pixels),2))
 		for i in range(0,len(self.right_pixels)):
@@ -55,7 +55,7 @@ class LeftRightState:
 
 		predictedR = []
 		for i in pointsR:
-			predictedR.append((i,np.squeeze(regrR.predict([i]))[0]))
+			predictedR.append((i,regrR.predict([i]).flatten('F')[0]))
 
 		return (predictedL, predictedR)
 
@@ -88,15 +88,16 @@ def onmoveRight(event, lrstate):
 if __name__ == "__main__":
 
 	print "Starting Edge Detection"
-	if len(sys.argv) != 3:
-		print "Usage: GuidedEdgeDetector.py left.jpg right.jpg" 
+	if len(sys.argv) != 4:
+		print "Usage: GuidedEdgeDetector.py left.jpg right.jpg numpoints" 
 		exit()
 
 	image_file_left = sys.argv[1]
 	image_file_right = sys.argv[2]
+	numpoints = sys.argv[3]
 
 	#left circle
-	img1 = cv2.imread('left1.jpg',0)
+	img1 = cv2.imread(image_file_left,0)
 
 	fig = plt.figure()
 	plt.imshow(img1,cmap = 'gray')
@@ -110,7 +111,7 @@ if __name__ == "__main__":
 
 
 	#right circle
-	img1 = cv2.imread('right1.jpg',0)
+	img1 = cv2.imread(image_file_right,0)
 
 	fig = plt.figure()
 	plt.imshow(img1,cmap = 'gray')
@@ -120,33 +121,4 @@ if __name__ == "__main__":
 
 	plt.show()
 
-	print state.fitLine(50)
-
-
-
-	"""
-	#hard-coded image workspace right
-	workspacer = workspace_mask([175, 1400, 350,  700],plot=True)
-
-	imgER = workspacer(segment_edge(img1, confidence=200, gsigma=10,plot=True))
-
-	maskedR = np.multiply(img1, imgER).astype('uint8')
-
-
-	img2 = cv2.imread('left1.jpg',0)
-
-	workspacel = workspace_mask([175, 1400, 350,  700],plot=True)
-
-	imgEL = workspacel(segment_edge(img2, confidence=200, gsigma=10,plot=True))
-
-	maskedL = np.multiply(img2, imgER).astype('uint8')
-
-
-
-	#outs = getStereoPairPointCloud(maskedL, maskedR)
-
-	#print get_line(outs)
-	"""
-
-	
-
+	pickle.dump(state.fitLine(numpoints), open("line.p",'wb'))

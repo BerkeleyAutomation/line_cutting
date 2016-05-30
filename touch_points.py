@@ -89,15 +89,22 @@ if __name__ == "__main__":
     cmat = load_camera_matrix()
     info = load_camera_info()
 
-    rpixels, lpixels = [(900, 473.38426456409923)], [(988.16895235719585, 467.38426456409923)]
-    rpixels, lpixels = [[900,488]],[[971,473]]
-    
-    rpixels, lpixels = [(900, 476.08000894473696)], [(970, 476.18027034907834)]
 
-    pts = pixels_to_3D(lpixels, rpixels, info)
+    loadedCameraPixelPoints = pickle.load(open("EdgeDetection/line.p","rb"))
+
+
+    #rpixels, lpixels = [(900, 473.38426456409923)], [(988.16895235719585, 467.38426456409923)]
+    #rpixels, lpixels = [[900,488]],[[971,473]]
+    
+    #rpixels, lpixels = [(355.6, 562.7)], [(421, 531)]
+
+    pts = pixels_to_3D(loadedCameraPixelPoints[0], loadedCameraPixelPoints[1] , info)
 
     for point in pts:
-        point = [-0.02753644, -0.003607055, 0.14450444]
+        # point = [-0.02753644, -0.003007055, 0.14450444]
+        # point = [-2.56233602e-2, -2.12872193e-2, 1.39059127e-1]
         print camera_to_robot_frame(point, cmat)
-        psm1.move_cartesian_frame(get_frame(camera_to_robot_frame(point, cmat)))
+        rpoint = get_frame(camera_to_robot_frame(point, cmat))
+        # rpoint[2] -= 0.04
+        # psm1.move_cartesian_frame(rpoint)
         time.sleep(2)
