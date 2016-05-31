@@ -81,6 +81,44 @@ def load_camera_matrix():
     f3.close()
     return cmat
 
+def load_robot_points(fname="calibration_data/gauze_pts.p"):
+    lst = []
+    f3 = open(fname, "rb")
+    while True:
+        try:
+            pos2 = pickle.load(f3)
+            lst.append(pos2)
+        except EOFError:
+            f3.close()
+            return np.matrix(lst)
+
+def home_robot():
+    pos = [0.023580864372, 0.00699340564912, -0.0485527311586]
+    psm1.move_cartesian_frame(get_frame(pos))
+
+def get_frame_rot(rot):
+    pos = [0.023580864372, 0.00699340564912, -0.0885527311586]
+    return tfx.pose(pos, rot)
+
+def iterate_angles():
+    roll = np.linspace(120, 160, num=10)
+    pitch = np.linspace(-50, 50, num=10)
+    yaw = np.linspace(50, 120, num=10)
+    time.sleep(2)
+    initial_angle = (88.0984719856, -12.0248544998, 131.680496265)
+    quaternion = tfx.tb_angles(initial_angle[0], initial_angle[1], initial_angle[2])
+    frame = get_frame_rot(quaternion)
+    psm1.move_cartesian_frame(frame)
+    psm1.open_gripper(80.0)
+
+    for i in range(10):
+        angle = (yaw[i], initial_angle[1], initial_angle[2])
+        quaternion = tfx.tb_angles(angle[0], angle[1], angle[2])
+        frame = get_frame_rot(quaternion)
+        psm1.move_cartesian_frame(frame)
+        time.sleep(0.2)
+
+
 
 if __name__ == "__main__":
 
@@ -89,22 +127,42 @@ if __name__ == "__main__":
     cmat = load_camera_matrix()
     info = load_camera_info()
 
-
-    loadedCameraPixelPoints = pickle.load(open("EdgeDetection/line.p","rb"))
-
-
-    #rpixels, lpixels = [(900, 473.38426456409923)], [(988.16895235719585, 467.38426456409923)]
-    #rpixels, lpixels = [[900,488]],[[971,473]]
     
-    #rpixels, lpixels = [(355.6, 562.7)], [(421, 531)]
 
-    pts = pixels_to_3D(loadedCameraPixelPoints[0], loadedCameraPixelPoints[1] , info)
 
-    for point in pts:
-        # point = [-0.02753644, -0.003007055, 0.14450444]
-        # point = [-2.56233602e-2, -2.12872193e-2, 1.39059127e-1]
-        print camera_to_robot_frame(point, cmat)
-        rpoint = get_frame(camera_to_robot_frame(point, cmat))
-        # rpoint[2] -= 0.04
-        # psm1.move_cartesian_frame(rpoint)
-        time.sleep(2)
+    # loadedCameraPixelPoints = pickle.load(open("EdgeDetection/line.p","rb"))
+
+
+    # #rpixels, lpixels = [(900, 473.38426456409923)], [(988.16895235719585, 467.38426456409923)]
+    # #rpixels, lpixels = [[900,488]],[[971,473]]
+    
+    # #rpixels, lpixels = [(355.6, 562.7)], [(421, 531)]
+
+    # pts = pixels_to_3D(loadedCameraPixelPoints[0], loadedCameraPixelPoints[1] , info)
+
+    # pts = load_robot_points()
+    # import line_cut_trajectory
+
+    # pts = line_cut_trajectory.interpolation(pts, 2)
+    # iterate_angles()
+
+
+    # for point in pts[:]:
+    #     break
+    #     # point = [-0.02753644, -0.003007055, 0.14450444]
+    #     # point = [-2.56233602e-2, -2.12872193e-2, 1.39059127e-1]
+    #     # print camera_to_robot_frame(point, cmat)
+    #     # rpoint = get_frame(camera_to_robot_frame(point, cmat))
+    #     # rpoint[2] -= 0.04
+    #     # home_robot()
+    #     # time.sleep(2)
+    #     # psm1.move_cartesian_frame(get_frame(point))
+    #     time.sleep(0.4)
+
+reference = np.array([0.0739098299534, 0.0486375608124, -0.121583587201])
+cur = np.array([0.0197644657859, 0.0417954898572, -0.0884330378186])
+
+delta = reference - cur
+print delta
+
+print np.arctan(delta[1]/delta[0])
