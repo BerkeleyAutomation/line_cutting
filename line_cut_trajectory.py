@@ -9,6 +9,10 @@ import fitplane
 from scipy.interpolate import interp1d
 from shape_tracer import plot_points
 
+"""
+This file contains utilities that are used for a trajectory following curve cutting model.
+"""
+
 
 def home_robot():
     pos = [0.023580864372, 0.00699340564912, -0.0485527311586]
@@ -68,6 +72,9 @@ def load_robot_points(fname="calibration_data/gauze_pts.p"):
             return np.matrix(lst)
 
 def interpolation(arr, factor):
+    """
+    Given a matrix of x,y,z coordinates, output a linearly interpolated matrix of coordinates with factor * arr.shape[1] points.
+    """
     x = arr[:, 0]
     y = arr[:, 1]
     z = arr[:, 2]
@@ -83,6 +90,9 @@ def interpolation(arr, factor):
     return new_matrix.T[:,1:]
 
 def get_frame_next(pos, nextpos):
+    """
+    Given two x,y,z coordinates, output a TFX pose that points the grippers to roughly the next position, at pos.
+    """
     angle = get_angle(pos, nextpos)
     print angle
     pos[2] -= 0.005
