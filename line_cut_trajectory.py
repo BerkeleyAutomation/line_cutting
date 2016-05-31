@@ -95,7 +95,7 @@ def get_frame_next(pos, nextpos):
     """
     angle = get_angle(pos, nextpos)
     print angle
-    pos[2] -= 0.005
+    pos[2] -= 0.002
     rotation = [94.299363207+angle, -4.72728031036, 86.1958002688]
     rot = tfx.tb_angles(rotation[0], rotation[1], rotation[2])
     frame = tfx.pose(pos, rot)
