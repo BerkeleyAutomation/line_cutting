@@ -32,7 +32,7 @@ def initialize(pts):
     # psm1.move_cartesian_frame(start_frame1)
     # psm1.open_gripper(80)
     # psm1_position = start_pos
-    time.sleep(2)
+    # time.sleep(2)
     return
 
 def get_frame_psm1(pos, rot=[0.617571885272, 0.59489495214, 0.472153066551, 0.204392867261]):
