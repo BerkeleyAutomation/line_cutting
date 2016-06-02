@@ -89,13 +89,13 @@ def interpolation(arr, factor):
         new_matrix = np.concatenate((new_matrix, np.matrix(i)), axis = 0)
     return new_matrix.T[:,1:]
 
-def get_frame_next(pos, nextpos):
+def get_frame_next(pos, nextpos, offset=0.003):
     """
     Given two x,y,z coordinates, output a TFX pose that points the grippers to roughly the next position, at pos.
     """
     angle = get_angle(pos, nextpos)
     print angle
-    pos[2] -= 0.002
+    pos[2] -= offset
     rotation = [94.299363207+angle, -4.72728031036, 86.1958002688]
     rot = tfx.tb_angles(rotation[0], rotation[1], rotation[2])
     frame = tfx.pose(pos, rot)
@@ -112,7 +112,7 @@ if __name__ == '__main__':
 
     pts = load_robot_points()
 
-    pts = interpolation(pts, 5)
+    pts = interpolation(pts, 8)
 
     print pts.shape
 
@@ -122,9 +122,13 @@ if __name__ == '__main__':
 
     for i in range(pts.shape[0]-1):
         print i
+        pos = psm1.get_current_cartesian_position().position
+        nextpos = pts[i+1,:]
+        frame = get_frame_next(np.ravel(pos), np.ravel(nextpos), offset=0)
+        psm1.move_cartesian_frame(frame)
+        cut()
         pos = pts[i,:]
         nextpos = pts[i+1,:]
-        cut()
         frame = get_frame_next(np.ravel(pos), np.ravel(nextpos))
         psm1.move_cartesian_frame(frame)
     plot_points()
