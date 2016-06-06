@@ -14,6 +14,8 @@ This file contains utilities that are used for a trajectory following curve cutt
 """
 
 
+
+
 def home_robot():
     pos = [0.023580864372, 0.00699340564912, -0.0485527311586]
     psm1.move_cartesian_frame(get_frame_psm1(pos))
@@ -89,11 +91,14 @@ def interpolation(arr, factor):
         new_matrix = np.concatenate((new_matrix, np.matrix(i)), axis = 0)
     return new_matrix.T[:,1:]
 
-def get_frame_next(pos, nextpos, offset=0.003):
+def get_frame_next(pos, nextpos, offset=0.003, angle=None):
     """
     Given two x,y,z coordinates, output a TFX pose that points the grippers to roughly the next position, at pos.
     """
-    angle = get_angle(pos, nextpos)
+    if angle:
+        angle = angle
+    else:
+        angle = get_angle(pos, nextpos)
     print angle
     pos[2] -= offset
     rotation = [94.299363207+angle, -4.72728031036, 86.1958002688]
@@ -108,28 +113,56 @@ def get_angle(pos, nextpos):
     delta = nextpos - pos
     return np.arctan(delta[1]/delta[0]) * 180 / np.pi
 
+def grab_gauze():
+    f = open("calibration_data/gauze_grab_pt.p")
+    pose = pickle.load(f)
+    print pose
+    tfx_pose = get_frame_psm1(pose[:3], pose[3:])
+    psm2.move_cartesian_frame(tfx_pose)
+    psm2.open_gripper(80)
+    time.sleep(2)
+    pose[2] -= 0.01
+    tfx_pose = get_frame_psm1(pose[:3], pose[3:])
+    psm2.move_cartesian_frame(tfx_pose)
+    psm2.open_gripper(-30)
+    time.sleep(2)
+    pose[2] += 0.01
+    tfx_pose = get_frame_psm1(pose[:3], pose[3:])
+    psm2.move_cartesian_frame(tfx_pose)
+    time.sleep(2)
+
+
 if __name__ == '__main__':
 
     pts = load_robot_points()
 
-    pts = interpolation(pts, 8)
+    pts = interpolation(pts, 9)
 
     print pts.shape
 
     psm1 = robot("PSM1")
+    psm2 = robot("PSM2")
 
     initialize(pts)
 
+    grab_gauze()
+
+    angles = []
+    for i in range(pts.shape[0]-1):
+        pos = pts[i,:]
+        nextpos = pts[i+1,:]
+        angle = get_angle(np.ravel(pos), np.ravel(nextpos))
+        angles.append(angle)
+    for i in range(len(angles)-2):
+        angles[i] = 0.5 * angles[i] + 0.35 * angles[i+1] + 0.15 * angles[i+2]
+
     for i in range(pts.shape[0]-1):
         print i
-        pos = psm1.get_current_cartesian_position().position
-        nextpos = pts[i+1,:]
-        frame = get_frame_next(np.ravel(pos), np.ravel(nextpos), offset=0)
-        psm1.move_cartesian_frame(frame)
         cut()
         pos = pts[i,:]
         nextpos = pts[i+1,:]
-        frame = get_frame_next(np.ravel(pos), np.ravel(nextpos))
+        frame = get_frame_next(np.ravel(pos), np.ravel(nextpos), offset=0.004, angle = angles[i])
+        angle = get_angle(np.ravel(pos), np.ravel(nextpos))
         psm1.move_cartesian_frame(frame)
     plot_points()
 

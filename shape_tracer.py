@@ -52,6 +52,29 @@ def load_robot_points():
             f3.close()
             return np.matrix(lst)
 
+def startCallback2():
+    global prs
+    process = multiprocessing.Process(target=start_listening2)
+    prs.append(process)
+    process.start()
+    return
+
+def start_listening2():
+    global sub
+    rospy.init_node('listener', anonymous=True)
+    sub = rospy.Subscriber('/dvrk/PSM2/position_cartesian_current', Pose, callback_PSM2_actual)
+    rospy.spin()
+
+def callback_PSM2_actual(data):
+    position = data.position
+    rotation = data.orientation
+    psm2_pose = [position.x, position.y, position.z, rotation.x, rotation.y, rotation.z, rotation.w]
+    print psm2_pose
+    f = open("calibration_data/gauze_grab_pt.p", "a")
+    pickle.dump(psm2_pose, f)
+    f.close()
+    sub.unregister()
+
 
 def plot_points():
     """
@@ -84,15 +107,18 @@ if __name__ == '__main__':
     prs = []
 
     open('calibration_data/gauze_pts.p', 'w+').close()
+    open("calibration_data/gauze_grab_pt.p", "w+").close()
 
     top = Tkinter.Tk()
     top.title('Calibration')
     top.geometry('400x200')
 
-    B = Tkinter.Button(top, text="Record Position", command = startCallback)
+    B = Tkinter.Button(top, text="Record Position PSM1", command = startCallback)
+    C = Tkinter.Button(top, text="Record Position PSM2", command = startCallback2)
     D = Tkinter.Button(top, text="Exit", command = exitCallback)
 
     B.pack()
+    C.pack()
     D.pack()
 
     top.mainloop()
