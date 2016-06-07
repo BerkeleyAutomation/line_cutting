@@ -182,6 +182,8 @@ if __name__ == '__main__':
         angles[i] = 0.5 * angles[i] + 0.35 * angles[i+1] + 0.15 * angles[i+2]
     angles = savgol_filter(angles, factor * 14 + 1, 2)
 
+    cpts = pts.copy()
+
     for i in range(pts.shape[0]-1):
         print i
         cut()
@@ -190,15 +192,25 @@ if __name__ == '__main__':
         frame = get_frame_next(np.ravel(pos), np.ravel(nextpos), offset=0.004, angle = angles[i])
         psm1.move_cartesian_frame(frame)
 
-        
-        desired_pos = np.ravel(np.array(pos))[:2]
-        error = calculate_xy_error(desired_pos)        
-        print error
-        #if x,y difference is greater than a certain threshold (1mm)
-        while error > 0.001:
-            psm1.move_cartesian_frame(frame)
-            error = calculate_xy_error(desired_pos)
-            print error
+        ### OLD ERROR CORRECTION CODE
+        # desired_pos = np.ravel(np.array(pos))[:2]
+        # error = calculate_xy_error(desired_pos)        
+        # print error
+        # #if x,y difference is greater than a certain threshold (2mm)
+        # while error > 0.002:
+        #     psm1.move_cartesian_frame(frame)
+        #     error = calculate_xy_error(desired_pos)
+        #     print error
+
+        curpt = np.ravel(np.array(psm1.get_current_cartesian_position().position))
+        pts[i,:] = curpt
+
+        pts[:,:2] = savgol_filter(pts[:,:2], 5, 2, axis=0)
+        if i % 25 == 0:
+            for i in range(3):
+                plt.plot(cpts[:,i])
+                plt.plot(pts[:,i], c='r')
+                plt.show()
 
     home_robot()
 
