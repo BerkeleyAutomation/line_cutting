@@ -147,12 +147,16 @@ def home_psm2():
     psm2.move_cartesian_frame(pose)
     time.sleep(2)
 
+def calculate_xy_error(desired_pos):
+    actual_pos = np.ravel(np.array(psm1.get_current_cartesian_position().position))[:2]
+    return np.linalg.norm(actual_pos - desired_pos)
 
 
 if __name__ == '__main__':
 
     pts = load_robot_points()
 
+    #factor used for interpolation, also used for filter length
     factor = 4
 
     pts = interpolation(pts, factor)
@@ -173,9 +177,11 @@ if __name__ == '__main__':
         nextpos = pts[i+1,:]
         angle = get_angle(np.ravel(pos), np.ravel(nextpos))
         angles.append(angle)
+
     for i in range(len(angles)-2):
         angles[i] = 0.5 * angles[i] + 0.35 * angles[i+1] + 0.15 * angles[i+2]
     angles = savgol_filter(angles, factor * 14 + 1, 2)
+
     for i in range(pts.shape[0]-1):
         print i
         cut()
@@ -184,11 +190,15 @@ if __name__ == '__main__':
         frame = get_frame_next(np.ravel(pos), np.ravel(nextpos), offset=0.004, angle = angles[i])
         psm1.move_cartesian_frame(frame)
 
-        actual_pos = np.array(psm1.get_current_cartesian_position().position)
-        desired_pos = np.ravel(np.array(pos))
-        error = np.linalg.norm(actual_pos - desired_pos)
-        if error > 0.02:
+        
+        desired_pos = np.ravel(np.array(pos))[:2]
+        error = calculate_xy_error(desired_pos)        
+        print error
+        #if x,y difference is greater than a certain threshold (1mm)
+        while error > 0.001:
             psm1.move_cartesian_frame(frame)
+            error = calculate_xy_error(desired_pos)
+            print error
 
     home_robot()
 
