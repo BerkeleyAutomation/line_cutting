@@ -8,6 +8,8 @@ import tfx
 import fitplane
 from scipy.interpolate import interp1d
 from shape_tracer import plot_points
+from scipy.signal import savgol_filter
+import matplotlib.pyplot as plt
 
 """
 This file contains utilities that are used for a trajectory following curve cutting model.
@@ -101,6 +103,7 @@ def get_frame_next(pos, nextpos, offset=0.003, angle=None):
         angle = get_angle(pos, nextpos)
     print angle
     pos[2] -= offset
+    # pos[0] += offset/3.0
     rotation = [94.299363207+angle, -4.72728031036, 86.1958002688]
     rot = tfx.tb_angles(rotation[0], rotation[1], rotation[2])
     frame = tfx.pose(pos, rot)
@@ -111,12 +114,17 @@ def get_angle(pos, nextpos):
     Returns angle to nextpos in degrees
     """
     delta = nextpos - pos
-    return np.arctan(delta[1]/delta[0]) * 180 / np.pi
+    theta = np.arctan(delta[1]/delta[0]) * 180 / np.pi
+    if delta[0] < 0:
+        return theta + 180
+    return theta
 
 def grab_gauze():
+    """
+    Fixed motion for grabbing gauze with PSM2.
+    """
     f = open("calibration_data/gauze_grab_pt.p")
     pose = pickle.load(f)
-    print pose
     tfx_pose = get_frame_psm1(pose[:3], pose[3:])
     psm2.move_cartesian_frame(tfx_pose)
     psm2.open_gripper(80)
@@ -131,21 +139,33 @@ def grab_gauze():
     psm2.move_cartesian_frame(tfx_pose)
     time.sleep(2)
 
+def home_psm2():
+    psm2.open_gripper(50)
+    pos = [-0.0800820928439, 0.0470152232648, -0.063244568979]
+    rot = [0.127591711166, 0.986924435718, 0.0258944271904, -0.0950262703941]
+    pose = get_frame_psm1(pos, rot)
+    psm2.move_cartesian_frame(pose)
+    time.sleep(2)
+
+
 
 if __name__ == '__main__':
 
     pts = load_robot_points()
 
-    pts = interpolation(pts, 9)
+    factor = 4
+
+    pts = interpolation(pts, factor)
 
     print pts.shape
 
     psm1 = robot("PSM1")
     psm2 = robot("PSM2")
 
+
     initialize(pts)
 
-    grab_gauze()
+    # grab_gauze()
 
     angles = []
     for i in range(pts.shape[0]-1):
@@ -155,14 +175,23 @@ if __name__ == '__main__':
         angles.append(angle)
     for i in range(len(angles)-2):
         angles[i] = 0.5 * angles[i] + 0.35 * angles[i+1] + 0.15 * angles[i+2]
-
+    angles = savgol_filter(angles, factor * 14 + 1, 2)
     for i in range(pts.shape[0]-1):
         print i
         cut()
         pos = pts[i,:]
         nextpos = pts[i+1,:]
         frame = get_frame_next(np.ravel(pos), np.ravel(nextpos), offset=0.004, angle = angles[i])
-        angle = get_angle(np.ravel(pos), np.ravel(nextpos))
         psm1.move_cartesian_frame(frame)
-    plot_points()
 
+        actual_pos = np.array(psm1.get_current_cartesian_position().position)
+        desired_pos = np.ravel(np.array(pos))
+        error = np.linalg.norm(actual_pos - desired_pos)
+        if error > 0.02:
+            psm1.move_cartesian_frame(frame)
+
+    home_robot()
+
+    # plot_points()
+
+    
