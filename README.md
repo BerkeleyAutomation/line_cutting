@@ -8,4 +8,4 @@ image_saver.py: saves images from both cameras to a directory specified in the s
 shape_tracer.py: saves 3d point in robot frame for both psm1 and psm2 (to separate files).
 line_cut.py: naive implementation of the line cutting experiment with no perception
 line_cut_trajectory.py: implementation of the line cutting experiment using the points in the robot frame, as well as smoothing using a Savitzky-Golay filter, and simple error correction.
-demo_recording.py: records robot demostrations to file. Note: the GUI is currently broken, so ctrl-z to exit/stop recording.
+demo_recorder.py: records robot demostrations to file. Note: the GUI is currently broken, so ctrl-z to exit/stop recording.
