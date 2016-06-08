@@ -181,11 +181,7 @@ if __name__ == '__main__':
     for i in range(len(angles)-2):
         angles[i] = 0.5 * angles[i] + 0.35 * angles[i+1] + 0.15 * angles[i+2]
     angles = savgol_filter(angles, factor * 14 + 1, 2)
-    plt.plot(angles)
-    for i in range(10):
-        angles = savgol_filter(angles, factor * 14 + 1, 2)
-    plt.plot(angles, c='r')
-    plt.show()
+
 
 
     for i in range(pts.shape[0]-1):
@@ -208,7 +204,7 @@ if __name__ == '__main__':
 
         curpt = np.ravel(np.array(psm1.get_current_cartesian_position().position))
         pts[i,:] = curpt
-        pts[:,:2] = savgol_filter(pts[:,:2], 5, 2, axis=0)
+        pts[i+1,:2] = savgol_filter(pts[:,:2], 5, 2, axis=0)[i+1,:] #probably going to make a small change to this tomorrow
 
 
         ###plotting code
