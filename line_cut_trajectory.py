@@ -192,16 +192,6 @@ if __name__ == '__main__':
         frame = get_frame_next(np.ravel(pos), np.ravel(nextpos), offset=0.004, angle = angles[i])
         psm1.move_cartesian_frame(frame)
 
-        ### OLD ERROR CORRECTION CODE
-        # desired_pos = np.ravel(np.array(pos))[:2]
-        # error = calculate_xy_error(desired_pos)        
-        # print error
-        # #if x,y difference is greater than a certain threshold (2mm)
-        # while error > 0.002:
-        #     psm1.move_cartesian_frame(frame)
-        #     error = calculate_xy_error(desired_pos)
-        #     print error
-
         curpt = np.ravel(np.array(psm1.get_current_cartesian_position().position))
         pts[i,:] = curpt
         pts[i+1,:2] = savgol_filter(pts[:,:2], 5, 2, axis=0)[i+1,:] #probably going to make a small change to this tomorrow
