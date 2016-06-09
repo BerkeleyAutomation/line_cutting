@@ -7,6 +7,9 @@ import multiprocessing
 import tfx
 import fitplane
 
+"""
+Naive, outdated line cutting code that does no perception or path tracking.
+"""
 
 def initialize():
     """
