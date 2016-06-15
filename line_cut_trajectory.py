@@ -64,7 +64,7 @@ def psm1_translation(translation):
     pos[2] += translation[2]
     psm1.move_cartesian_frame(get_frame_psm1(pos))
 
-def load_robot_points(fname="calibration_data/gauze_pts.p"):
+def load_robot_points(fname="calibration_data/gauze_pts2.p"):
     lst = []
     f3 = open(fname, "rb")
     while True:
@@ -180,7 +180,7 @@ if __name__ == '__main__':
 
     for i in range(len(angles)-2):
         angles[i] = 0.5 * angles[i] + 0.35 * angles[i+1] + 0.15 * angles[i+2]
-    angles = savgol_filter(angles, factor * 14 + 1, 2)
+    angles = savgol_filter(angles, factor * (pts.shape[0]/12) + 1, 2)
 
 
 
@@ -213,8 +213,6 @@ if __name__ == '__main__':
         #         plt.plot(cpts[:,i])
         #         plt.plot(pts[:,i], c='r')
         #         plt.show()
-
-    home_robot()
 
     # plot_points()
 
