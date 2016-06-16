@@ -188,7 +188,6 @@ if __name__ == '__main__':
         cut()
         pos = pts[i,:]
         nextpos = pts[i+1,:]
-        print pos, nextpos
         frame = get_frame_next(np.ravel(pos), np.ravel(nextpos), offset=0.004, angle = angles[i])
         psm1.move_cartesian_frame(frame)
 
