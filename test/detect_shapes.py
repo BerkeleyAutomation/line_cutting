@@ -1,8 +1,9 @@
 # import the necessary packages
-from pyimagesearch.shapedetector import ShapeDetector
+# from pyimagesearch.shapedetector import ShapeDetector
 import argparse
 import imutils
 import cv2
+import numpy as np
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
@@ -31,7 +32,7 @@ cnts = cnts[0] if imutils.is_cv2() else cnts[1]
 
 
 # initialize the shape detector
-sd = ShapeDetector()
+# sd = ShapeDetector()
 
 # loop over the contours
 for c in cnts:
@@ -40,22 +41,23 @@ for c in cnts:
 	M = cv2.moments(c)
 	cX = int((M["m10"] / M["m00"]) * ratio) if M["m00"] != 0 else 0
 	cY = int((M["m01"] / M["m00"]) * ratio) if M["m00"] != 0 else 0
-	shape = sd.detect(c)
+	# shape = sd.detect(c)
 
-	#find mean color
-	mask = np.zeros(imgray.shape,np.uint8)
-	mean_val = cv2.mean(im,mask = mask)
+	# #find mean color
+	# mask = np.zeros(gray.shape,np.uint8)
+	# mean_val = cv2.mean(gray,mask = mask)
 
 	# multiply the contour (x, y)-coordinates by the resize ratio,
 	# then draw the contours and the name of the shape on the image
-	c = c.astype("float")
-	c *= ratio
-	c = c.astype("int")
-	cv2.drawContours(image, [c], -1, (0, 255, 0), 2)
-	cv2.putText(image, shape, (cX, cY), cv2.FONT_HERSHEY_SIMPLEX,
-		0.5, (255, 255, 255), 2)
+	# c = c.astype("float")
+	# c *= ratio
+	# c = c.astype("int")
+	# cv2.drawContours(image, [c], -1, (0, 255, 0), 2)
+	# cv2.putText(image, shape, (cX, cY), cv2.FONT_HERSHEY_SIMPLEX,
+	# 	0.5, (255, 255, 255), 2)
 
-	# show the output image
-	cv2.imshow("Image", image)
-	cv2.waitKey(0)
+	# # show the output image
+	# cv2.imshow("Image", image)
+	# cv2.waitKey(0)
+	print (cX, cY)
 	
