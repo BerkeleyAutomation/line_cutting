@@ -20,11 +20,12 @@ import scipy.interpolate
 from sklearn.neighbors import KNeighborsClassifier
 
 
+### TO DO: right image/left image preprocessing to increase robustness
 
-def contour_detector(image, show_plots = False):
+def contour_detector(image, show_plots = False, rescale=2):
     # resize it to a smaller factor so that
     # the shapes can be approximated better
-    resized = imutils.resize(image, width=int(np.ceil(image.shape[1]/2)))
+    resized = imutils.resize(image, width=int(np.ceil(image.shape[1]/rescale)))
     ratio = image.shape[0] / float(resized.shape[0])
 
     # convert the resized image to grayscale, blur it slightly,
@@ -34,11 +35,15 @@ def contour_detector(image, show_plots = False):
     # thresh = cv2.threshold(blurred, 150, 255, cv2.THRESH_BINARY)[1]
     thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
         cv2.THRESH_BINARY, 11, 2)
-    thresh = 255 - thresh
-
+    
+    # cv2.dilate(thresh, thresh, iterations=1)
+    kernel = np.ones((10, 10), np.uint8)
+    opening = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+    closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel)
+    thresh = 255 - closing
     # edges = cv2.Canny(blurred, 100, 200)
     if show_plots:
-        cv2.imshow("Thresh", blurred)
+        cv2.imshow("Thresh", thresh)
         cv2.waitKey(0)
     hsv = cv2.cvtColor(resized, cv2.COLOR_BGR2HSV)
 
@@ -73,7 +78,7 @@ def contour_detector(image, show_plots = False):
             c *= ratio
             c = c.astype("int")
             cv2.drawContours(image, [c], -1, (0, 255, 0), 2)
-            cv2.putText(image, "center", (cX, cY), cv2.FONT_HERSHEY_SIMPLEX,
+            cv2.putText(image, "x", (cX, cY), cv2.FONT_HERSHEY_SIMPLEX,
               0.5, (255, 255, 255), 2)
 
             # show the output image
@@ -105,7 +110,7 @@ def find_correspondences(left, right, disparity_max, disparity_min=0, blob_area_
 
             if dist < disparity_max and dist < best_dist and dist >= disparity_min and blob_left[2] < blob_max_area:
                 # check the h value of the means to see if they are with +-10 of each other
-                if abs(mean_left[0] - right[j][0][0]) < 10:
+                if abs(mean_left[0] - right[j][0][0]) < 10 and center_left[0] > center_right[0]:
                     if abs(center_right[1] - center_left[1]) < 20 and abs(blob_left[2] - blob_right[2]) < blob_area_disparity:
                         best_dist = dist
                         best_idx = j
@@ -156,37 +161,14 @@ def get_points_3d(info, left_points, right_points):
     return np.array(points_3d)
 
 def fit_surface(pts3d):
-    points = pts3d[:,:2]
-    values = pts3d[:,2]
+    pts3d = np.array(pts3d)
+    x = pts3d[:,0]
+    y = pts3d[:,1]
+    z = pts3d[:,2]
+    return scipy.interpolate.interp2d(x, y, z, kind='linear')
+        
 
-    grid_x, grid_y = np.mgrid[-0.05:0.05:0.0001, -0.05:0.05:0.0001]
-    method = 'cubic'
-    grid_z2 = scipy.interpolate.griddata(points, values, (grid_x, grid_y), method='cubic')
-    return grid_z2.T
 
-def query_pt(grid_z2, pt):
-    x, y = pt
-    x = int((x + 0.05) / 0.0001)
-    y = int((y + 0.05) / 0.0001)
-    print x, y
-    if not np.isnan(grid_z2[y, x]):
-        return grid_z2[y, x]
-    nans = np.isnan(grid_z2)
-    pts = []
-    vals = []
-    for i in range(1000):
-        for j in range(1000):
-            if nans[i,j]:
-                continue
-            pts.append([i,j])
-            vals.append(grid_z2[i,j])
-    vals = np.ceil(np.array(vals) * 1000000)
-    return knn_clasifier(pts, vals).predict([(y, x)]) / 1000000
-
-def knn_clasifier(pts, y):
-    neigh = KNeighborsClassifier(n_neighbors=1)
-    neigh.fit(pts, y)
-    return neigh
 
 
 
@@ -215,33 +197,36 @@ if __name__ == "__main__":
     f.close()
 
 
-    left_image = cv2.imread("left0.jpg")
-    right_image = cv2.imread("right0.jpg")
+    left_image = cv2.imread("left6.jpg")
+    right_image = cv2.imread("right6.jpg")
     left = contour_detector(left_image, SHOW_PLOTS)
     right = contour_detector(right_image, SHOW_PLOTS)
 
-    correspondences = find_correspondences(left, right, 500, 70)
+    correspondences = find_correspondences(left, right, 300, 70)
+
+    print "correspondences found", len(correspondences)
+
 
     disparities = calculate_disparity(correspondences)
 
     left_pts = [a[0] for a in correspondences]
     right_pts = [a[1] for a in correspondences]
     pts3d = get_points_3d(info, left_pts, right_pts)
+    a, b =  np.min(pts3d, axis=0), np.max(pts3d, axis=0)
+    f = fit_surface(pts3d)
 
-    X = [[0], [3.1], [2], [3]]
-    y = [0, 0, 1, 1]
-    from sklearn.neighbors import KNeighborsClassifier
-    neigh = KNeighborsClassifier(n_neighbors=3)
-    neigh.fit(X, y) 
-
-    print(neigh.predict([[1.1]]))
-
-    print(neigh.predict_proba([[0.9]]))
+    extra_range = -0.01
+    xnew = np.arange(a[0] - extra_range,b[0] + extra_range,0.0001)
+    ynew = np.arange(a[1] - extra_range,b[1] + extra_range,0.0001)
+    znew = f(xnew, ynew)
+    plt.imshow(znew)
+    plt.show()
 
     print pts3d
-    surf = fit_surface(pts3d)
-    pt = [0, 0]
-    print query_pt(surf, pt)
-    # plt.imshow(surf)
-    # plt.show()
-
+    print f(-0.0125228, 0.01744704)
+    
+    plt.imshow(left_image)
+    plt.show()
+    plt.imshow(right_image)
+    plt.show()
+    
