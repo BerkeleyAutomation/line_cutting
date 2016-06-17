@@ -6,7 +6,6 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import IPython
-from ImageSubscriber import ImageSubscriber
 import pickle
 from geometry_msgs.msg import PointStamped, Point
 from visualization_msgs.msg import Marker
@@ -74,6 +73,7 @@ def line_detector_painted(image, show_plots = False):
     if show_plots:
         cv2.imshow("Thresh", thresh)
         cv2.waitKey(0)
+    return remove_blobs(image, resized, thresh, ratio, show_plots), ratio
 
 def remove_blobs(full_image, resized_image, gray, ratio, show_plots=False):
     if show_plots:
@@ -107,9 +107,11 @@ def detect_relative_position(cur_position, next_position, image, ratio, rect_wid
     cur_position, next_position = np.array(cur_position), np.array(next_position)
     delta = next_position - cur_position
     slope = np.array((delta[0], delta[1]))
-    slope =  slope / np.linalg.norm(slope)
+    if np.linalg.norm(slope) != 0:
+        slope =  slope / np.linalg.norm(slope)
     perp_slope = np.array((-delta[1], delta[0]))
-    perp_slope = perp_slope / np.linalg.norm(perp_slope)
+    if np.linalg.norm(perp_slope) != 0:
+        perp_slope = perp_slope / np.linalg.norm(perp_slope)
     pts = []
     # points defining the corners of a rectangle
     pts.append(next_position + perp_slope * rect_width / 2)
@@ -182,6 +184,8 @@ def detect_relative_position(cur_position, next_position, image, ratio, rect_wid
             best_center = center
             
     center_of_mass = best_center
+    if center_of_mass == None:
+        return -1
     line_vector = center_of_mass - np.array(cur_position)
     planned_vector = np.array(next_position) - np.array(cur_position)
 
@@ -197,15 +201,10 @@ if __name__ == "__main__":
 
     SHOW_PLOTS = False
 
-    left_image = cv2.imread("left6.jpg")
-    right_image = cv2.imread("right6.jpg")
+    left_image = cv2.imread("left.jpg")
 
-    cur_position = (1400, 200)
-    next_position = (1200, 500)
+    cur_position = (1400, 400)
+    next_position = (1320, 360)
 
     left_gray, ratio = line_detector_drawn(left_image, SHOW_PLOTS)
-    rel = detect_relative_position(cur_position, next_position, left_gray, ratio, show_plots=SHOW_PLOTS)
-    if rel > 0:
-        print 'right'
-    else:
-        print 'left'
+    rel = detect_relative_position(cur_position, next_position, left_gray, ratio, show_plots=True)

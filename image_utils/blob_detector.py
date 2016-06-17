@@ -6,7 +6,6 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import IPython
-from ImageSubscriber import ImageSubscriber
 import pickle
 from geometry_msgs.msg import PointStamped, Point
 from visualization_msgs.msg import Marker
