@@ -187,8 +187,8 @@ if __name__ == "__main__":
     f.close()
 
 
-    left_image = cv2.imread("left6.jpg")
-    right_image = cv2.imread("right6.jpg")
+    left_image = cv2.imread("left3.jpg")
+    right_image = cv2.imread("right3.jpg")
     left = contour_detector(left_image, SHOW_PLOTS)
     right = contour_detector(right_image, SHOW_PLOTS)
 
@@ -224,11 +224,11 @@ if __name__ == "__main__":
     plt.imshow(znew)
     plt.show()
 
-    # print pts3d
+    print pts3d
     # print f(-0.0125228, 0.01744704)
     
 
-    if not SHOW_PLOTS:
+    if SHOW_PLOTS:
         plt.imshow(left_image)
         plt.show()
         plt.imshow(right_image)
