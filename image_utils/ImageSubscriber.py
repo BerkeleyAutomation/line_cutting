@@ -23,7 +23,7 @@ class ImageSubscriber:
 
         #========SUBSCRIBERS========#
         # image subscribers
-        rospy.init_node('image_saver')
+        rospy.init_node('image_saver', anonymous=True)
         rospy.Subscriber("/endoscope/left/image_rect_color", Image,
                          self.left_image_callback, queue_size=1)
         rospy.Subscriber("/endoscope/right/image_rect_color", Image,
@@ -33,7 +33,6 @@ class ImageSubscriber:
                          CameraInfo, self.left_info_callback)
         rospy.Subscriber("/endoscope/right/camera_info",
                          CameraInfo, self.right_info_callback)
-        rospy.spin()
 
 
     def left_info_callback(self, msg):
@@ -58,5 +57,5 @@ class ImageSubscriber:
 
 
 if __name__ == "__main__":
-    a = ImageSaver()
-
+    a = ImageSubscriber()
+    print "created image subscriber"
