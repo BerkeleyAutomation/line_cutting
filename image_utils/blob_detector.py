@@ -33,7 +33,7 @@ def contour_detector(image, show_plots = False, rescale=2):
     blurred = cv2.GaussianBlur(gray, (25, 25), 0)
     # thresh = cv2.threshold(blurred, 150, 255, cv2.THRESH_BINARY)[1]
     thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-        cv2.THRESH_BINARY, 11, 2)
+        cv2.THRESH_BINARY, 19, 2)
     
     # cv2.dilate(thresh, thresh, iterations=1)
     kernel = np.ones((10, 10), np.uint8)
@@ -68,7 +68,8 @@ def contour_detector(image, show_plots = False, rescale=2):
         mask = np.zeros(gray.shape,np.uint8)
         cv2.drawContours(mask,[c],0,255,-1)
         mean_val = cv2.mean(hsv,mask = mask)
-
+        if np.max(mean_val) < 100 or np.min(mean_val[:3]) < 50:
+                continue
         lst.append([mean_val[:3], (cX, cY), cv2.contourArea(c)])
 
         # print [mean_val[:3], (cX, cY)]
@@ -88,7 +89,7 @@ def contour_detector(image, show_plots = False, rescale=2):
     # cv2.waitKey(0)
     return lst
 
-def find_correspondences(left, right, disparity_max, disparity_min=0, blob_area_disparity=300, blob_max_area=1000):
+def find_correspondences(left, right, disparity_max, disparity_min=0, blob_area_disparity=500, blob_max_area=2000, debugging=False):
     indices = []
     correspondences = []
     for i in range(len(left)):
@@ -106,10 +107,14 @@ def find_correspondences(left, right, disparity_max, disparity_min=0, blob_area_
             center_right = np.array(blob_right[1])
 
             dist = np.linalg.norm(center_left - center_right)
-
+            if debugging:
+                if center_right[0] == 1002 and center_left[0] == 1132:
+                    print dist < disparity_max, dist < best_dist, dist >= disparity_min, blob_left[2] < blob_max_area
+                    print abs(mean_left[0] - right[j][0][0]) < 20,  center_left[0] > center_right[0]
+                    print abs(center_right[1] - center_left[1]) < 20, abs(blob_left[2] - blob_right[2]) < blob_area_disparity
             if dist < disparity_max and dist < best_dist and dist >= disparity_min and blob_left[2] < blob_max_area:
                 # check the h value of the means to see if they are with +-10 of each other
-                if abs(mean_left[0] - right[j][0][0]) < 10 and center_left[0] > center_right[0]:
+                if abs(mean_left[0] - right[j][0][0]) < 20 and center_left[0] > center_right[0]:
                     if abs(center_right[1] - center_left[1]) < 20 and abs(blob_left[2] - blob_right[2]) < blob_area_disparity:
                         best_dist = dist
                         best_idx = j
@@ -167,24 +172,10 @@ def fit_surface(pts3d):
     return scipy.interpolate.interp2d(x, y, z, kind='linear')
         
 
-
-
-
-
-
 if __name__ == "__main__":
-    # construct the argument parse and parse the arguments
-    # ap = argparse.ArgumentParser()
-    # ap.add_argument("-i", "--image", required=True,
-    #     help="path to the input image")
-    # args = vars(ap.parse_args())
 
-    # load the image and 
-    # image = cv2.imread(args["image"])
-
-    # left_image = cv2.imread("shapes_and_colors.jpg")
-    # right_image = cv2.imread("shapes_and_colors.jpg")
     SHOW_PLOTS = False
+
 
     info = {}
     f = open("../calibration_data/camera_left.p", "rb")
@@ -201,7 +192,19 @@ if __name__ == "__main__":
     left = contour_detector(left_image, SHOW_PLOTS)
     right = contour_detector(right_image, SHOW_PLOTS)
 
+    # print [l[1] for l in left]
+    # print [r[1] for r in right]
+
+    # print [l[0] for l in left]
+    # print [r[0] for r in right]
+
+    # print [l[2] for l in left]
+    # print [r[2] for r in right]
+
+
+
     correspondences = find_correspondences(left, right, 300, 70)
+    print correspondences
 
     print "correspondences found", len(correspondences)
 
@@ -221,11 +224,12 @@ if __name__ == "__main__":
     plt.imshow(znew)
     plt.show()
 
-    print pts3d
-    print f(-0.0125228, 0.01744704)
+    # print pts3d
+    # print f(-0.0125228, 0.01744704)
     
-    plt.imshow(left_image)
-    plt.show()
-    plt.imshow(right_image)
-    plt.show()
-    
+
+    if not SHOW_PLOTS:
+        plt.imshow(left_image)
+        plt.show()
+        plt.imshow(right_image)
+        plt.show()
