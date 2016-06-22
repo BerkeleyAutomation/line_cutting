@@ -70,7 +70,7 @@ def callback_PSM2_actual(data):
     rotation = data.orientation
     psm2_pose = [position.x, position.y, position.z, rotation.x, rotation.y, rotation.z, rotation.w]
     print psm2_pose
-    f = open("calibration_data/gauze_grab_pt.p", "a")
+    f = open("calibration_data/gauze_pts2.p", "a")
     pickle.dump(psm2_pose, f)
     f.close()
     sub.unregister()
@@ -107,7 +107,7 @@ if __name__ == '__main__':
     prs = []
 
     open('calibration_data/gauze_pts.p', 'w+').close()
-    open("calibration_data/gauze_grab_pt.p", "w+").close()
+    open("calibration_data/gauze_pts2.p", "w+").close()
 
     top = Tkinter.Tk()
     top.title('Calibration')
