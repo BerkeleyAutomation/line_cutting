@@ -199,12 +199,13 @@ def detect_relative_position(cur_position, next_position, image, ratio, rect_wid
 
 if __name__ == "__main__":
 
-    SHOW_PLOTS = False
+    SHOW_PLOTS = True
 
-    left_image = cv2.imread("left.jpg")
+    left_image = cv2.imread("left12.jpg")
 
-    cur_position = (1400, 400)
-    next_position = (1320, 360)
+    cur_position = (1000, 300)
+    next_position = (990, 290)
 
     left_gray, ratio = line_detector_drawn(left_image, SHOW_PLOTS)
     rel = detect_relative_position(cur_position, next_position, left_gray, ratio, show_plots=True)
+    print rel
