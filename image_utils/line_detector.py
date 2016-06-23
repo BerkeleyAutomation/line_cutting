@@ -71,13 +71,13 @@ def line_detector_painted(image, show_plots = False):
     thresh = 255 - closing
 
     if show_plots:
-        cv2.imshow("Thresh", thresh)
+        cv2.imshow("Thresh1", thresh)
         cv2.waitKey(0)
     return remove_blobs(image, resized, thresh, ratio, show_plots), ratio
 
 def remove_blobs(full_image, resized_image, gray, ratio, show_plots=False):
     if show_plots:
-        cv2.imshow("Thresh", gray)
+        cv2.imshow("Thresh2", gray)
         cv2.waitKey(0)
 
     cnts = cv2.findContours(gray.copy(), cv2.RETR_EXTERNAL,
@@ -85,16 +85,28 @@ def remove_blobs(full_image, resized_image, gray, ratio, show_plots=False):
     cnts = cnts[0] if imutils.is_cv2() else cnts[1]
 
     # loop over the contours
-
+    
     hsv = cv2.cvtColor(resized_image, cv2.COLOR_BGR2HSV)
+    minv = 1000
     for c in cnts:
         mask = np.zeros(gray.shape,np.uint8)
         cv2.drawContours(mask,[c],0,255,-1)
         mean_val = np.array(cv2.mean(hsv,mask = mask))
-        if np.max(mean_val) < 100:
-           continue
+        minv = min(mean_val[2], minv)
+    print minv
+
+    for c in cnts:
+        mask = np.zeros(gray.shape,np.uint8)
+        cv2.drawContours(mask,[c],0,255,-1)
+        mean_val = np.array(cv2.mean(hsv,mask = mask))
+        if np.max(mean_val) < 100 or mean_val[2] < minv:
+            continue
         else:
-            cv2.drawContours(gray, [c], -1, (0, 0, 0), -1)
+            print cv2.contourArea(c)
+            if cv2.contourArea(c) < 2000:
+                cv2.drawContours(gray, [c], -1, (0, 0, 0), -1)
+            else:
+                pass
     if show_plots:
         cv2.imshow("a", gray)
         cv2.waitKey(0)
@@ -157,15 +169,15 @@ def detect_relative_position(cur_position, next_position, image, ratio, rect_wid
     cv2.drawContours(mask,[np.array(newpts)],0,255,-1)
 
     new_image *= mask
-    if show_plots:
-        plt.imshow(image)
-        plt.show()
-        plt.imshow(new_image, cmap='Greys_r')
-        plt.show()
-        plt.imshow(mask, cmap='Greys_r')
-        plt.show()
-        plt.imshow(new_image[xstart:xend,ystart:yend], cmap='Greys_r')
-        plt.show()
+    # if show_plots:
+    #     plt.imshow(image)
+    #     plt.show()
+    #     plt.imshow(new_image, cmap='Greys_r')
+    #     plt.show()
+    #     plt.imshow(mask, cmap='Greys_r')
+    #     plt.show()
+    #     plt.imshow(new_image[xstart:xend,ystart:yend], cmap='Greys_r')
+    #     plt.show()
 
 
     cnts = cv2.findContours(new_image[xstart:xend,ystart:yend], cv2.RETR_EXTERNAL,
