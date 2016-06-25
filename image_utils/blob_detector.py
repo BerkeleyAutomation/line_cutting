@@ -172,7 +172,7 @@ def fit_surface(pts3d):
     return scipy.interpolate.interp2d(x, y, z, kind='linear')
 
 def leftpixels_to_cframe(surf, x, y):
-    
+    return
         
 
 if __name__ == "__main__":
@@ -225,7 +225,7 @@ if __name__ == "__main__":
     ynew = np.arange(a[1] - extra_range,b[1] + extra_range,0.0001)
     znew = f(xnew, ynew)
     plt.imshow(znew)
-    plt.show()
+    plt.show()  
 
     print pts3d
     # print f(-0.0125228, 0.01744704)
@@ -236,3 +236,5 @@ if __name__ == "__main__":
         plt.show()
         plt.imshow(right_image)
         plt.show()
+
+
