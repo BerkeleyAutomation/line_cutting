@@ -170,6 +170,9 @@ def fit_surface(pts3d):
     y = pts3d[:,1]
     z = pts3d[:,2]
     return scipy.interpolate.interp2d(x, y, z, kind='linear')
+
+def leftpixels_to_cframe(surf, x, y):
+    
         
 
 if __name__ == "__main__":
@@ -187,8 +190,8 @@ if __name__ == "__main__":
     f.close()
 
 
-    left_image = cv2.imread("left3.jpg")
-    right_image = cv2.imread("right3.jpg")
+    left_image = cv2.imread("left50.jpg")
+    right_image = cv2.imread("right50.jpg")
     left = contour_detector(left_image, SHOW_PLOTS)
     right = contour_detector(right_image, SHOW_PLOTS)
 
