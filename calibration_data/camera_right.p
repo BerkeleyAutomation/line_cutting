@@ -18,7 +18,7 @@ g2
 Ntp7
 Rp8
 (lp9
-I188284
+I149209
 ag0
 (cgenpy.rostime
 Time
@@ -27,8 +27,8 @@ g2
 Ntp11
 Rp12
 (lp13
-I1466814288
-aI55116697
+I1467417432
+aI455328595
 abaS'/endoscope_frame'
 p14
 abaI1080

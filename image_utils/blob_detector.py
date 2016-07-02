@@ -68,8 +68,9 @@ def contour_detector(image, show_plots = False, rescale=2):
         mask = np.zeros(gray.shape,np.uint8)
         cv2.drawContours(mask,[c],0,255,-1)
         mean_val = cv2.mean(hsv,mask = mask)
-        if np.max(mean_val) < 100 or np.min(mean_val[:3]) < 50:
-                continue
+        print mean_val
+        if np.max(mean_val) < 100 and np.min(mean_val[:3]) < 50:
+            continue
         lst.append([mean_val[:3], (cX, cY), cv2.contourArea(c)])
 
         # print [mean_val[:3], (cX, cY)]
@@ -89,7 +90,7 @@ def contour_detector(image, show_plots = False, rescale=2):
     # cv2.waitKey(0)
     return lst
 
-def find_correspondences(left, right, disparity_max, disparity_min=0, blob_area_disparity=500, blob_max_area=2000, debugging=False):
+def find_correspondences(left, right, disparity_max, disparity_min=0, blob_area_disparity=200, blob_max_area=2000, debugging=False):
     indices = []
     correspondences = []
     for i in range(len(left)):
@@ -187,7 +188,7 @@ def leftpixels_to_cframe(surf, left_pts, right_pts, pts3d, x, y):
 
     xnew = m1 * x + c1
     ynew = m2 * y + c2
-    return (xnew, ynew, surf(xnew, ynew))
+    return (xnew, ynew, surf(xnew, ynew)[0])
         
 
 if __name__ == "__main__":
@@ -205,8 +206,8 @@ if __name__ == "__main__":
     f.close()
 
 
-    left_image = cv2.imread("left50.jpg")
-    right_image = cv2.imread("right50.jpg")
+    left_image = cv2.imread("left43.jpg")
+    right_image = cv2.imread("right43.jpg")
     left = contour_detector(left_image, SHOW_PLOTS)
     right = contour_detector(right_image, SHOW_PLOTS)
 
@@ -219,7 +220,7 @@ if __name__ == "__main__":
     # print [l[2] for l in left]
     # print [r[2] for r in right]
 
-
+    print len(right), len(left)
 
     correspondences = find_correspondences(left, right, 300, 70)
     print correspondences
@@ -245,10 +246,13 @@ if __name__ == "__main__":
     print pts3d
     # print f(-0.0125228, 0.01744704)
     
-    print leftpixels_to_cframe(f, left_pts, right_pts, pts3d, 1160, 786)
-    print pts3d[0]
+    print leftpixels_to_cframe(f, left_pts, right_pts, pts3d, 1000, 465)
+    # print pts3d[0]
 
-    if SHOW_PLOTS:
+    plt.imshow(left_image)
+    # plt.show()
+
+    if not SHOW_PLOTS:
         plt.imshow(left_image)
         plt.show()
         plt.imshow(right_image)
