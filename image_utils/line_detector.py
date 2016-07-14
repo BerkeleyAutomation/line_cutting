@@ -412,19 +412,15 @@ if __name__ == "__main__":
 
     SHOW_PLOTS = False
 
-    lst = get_surface("left97.jpg", "right97.jpg") # specify images
-    surf = lst[0]
-    left_pts = lst[1]
-    right_pts = lst[2]
-    pts3d = lst[3]
-    oldpts3d = lst[4]
+    surf = get_surface("left86.jpg", "right86.jpg") # specify images
 
-    left_image = cv2.imread("left97.jpg")
+
+    left_image = cv2.imread("left86.jpg")
     plt.imshow(np.array(left_image))
     plt.show()
 
-    cur_position = (2000, 500)
-    next_position = (1990, 500)
+    cur_position = (2000, 400)
+    next_position = (1990, 400)
 
     left_gray, ratio = line_detector_drawn(left_image, SHOW_PLOTS)
     rel = detect_relative_position(cur_position, next_position, left_gray, ratio, show_plots=False)
@@ -440,13 +436,14 @@ if __name__ == "__main__":
         if next_position == None:
             break
         heading = np.arctan((np.array(cur_position) - np.array(next_position))[1] / (np.array(cur_position) - np.array(next_position))[0])
-        pos = leftpixels_to_cframe(surf, left_pts, right_pts, pts3d, next_position[0], next_position[1])
+        pos = leftpixels_to_cframe(surf, surf.left_pts, surf.right_pts, surf.oldpts3d, next_position[0], next_position[1], knn=False)
         traj.append(pos)
         pxtraj.append(next_position.tolist())
-    print traj
-    print pxtraj
+    print traj[2:-1]
+    print pxtraj[2:-1]
     pxtraj = np.matrix(pxtraj)
     plt.scatter(pxtraj[:,0], pxtraj[:,1])
     plt.show()
     plot_points(np.matrix(traj))
 
+    # print surf.pts3d

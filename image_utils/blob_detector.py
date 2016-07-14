@@ -17,6 +17,7 @@ import time
 import image_geometry
 import scipy.interpolate
 from sklearn.neighbors import KNeighborsClassifier
+from statsmodels.nonparametric.kernel_regression import KernelReg
 
 
 ### TO DO: right image/left image preprocessing to increase robustness
@@ -54,7 +55,6 @@ def contour_detector(image, show_plots = False, rescale=2):
     # initialize the shape detector
     # sd = ShapeDetector()
     lst = []
-    print len(cnts)
     # loop over the contours
     for c in cnts:
         # compute the center of the contour, then detect the name of the
@@ -68,9 +68,8 @@ def contour_detector(image, show_plots = False, rescale=2):
         mask = np.zeros(gray.shape,np.uint8)
         cv2.drawContours(mask,[c],0,255,-1)
         mean_val = cv2.mean(hsv,mask = mask)
-        if cv2.contourArea(c) > 2000 or cv2.contourArea(c) < 500 or mean_val[0] < 90 or mean_val[2] < 70:
+        if cv2.contourArea(c) > 2000 or cv2.contourArea(c) < 100 or mean_val[0] < 90 or mean_val[2] < 70:
             continue
-        print mean_val, cv2.contourArea(c)
         lst.append([mean_val[:3], (cX, cY), cv2.contourArea(c)])
 
         # print [mean_val[:3], (cX, cY)]
@@ -167,14 +166,12 @@ def fit_surface(pts3d):
     z = pts3d[:,2]
     return scipy.interpolate.interp2d(x, y, z, kind='linear')
 
-def leftpixels_to_cframe(surf, left_pts, right_pts, pts3d, x, y):
+def leftpixels_to_cframe(surf, left_pts, right_pts, pts3d, x, y, knn=False):
     xin = np.array([a[0] for a in left_pts])
     bias = np.ones(len(xin))
     yin = np.array([a[1] for a in left_pts])
-
-    xout = np.array([a[0] for a in pts3d])
-    yout = np.array([a[1] for a in pts3d])
-
+    xout = np.array([np.ravel(a)[0] for a in pts3d])
+    yout = np.array([np.ravel(a)[1] for a in pts3d])
     A = np.vstack([xin, bias]).T
     m1, c1 = np.linalg.lstsq(A, xout)[0]
 
@@ -183,7 +180,15 @@ def leftpixels_to_cframe(surf, left_pts, right_pts, pts3d, x, y):
 
     xnew = m1 * x + c1
     ynew = m2 * y + c2
-    return (xnew, ynew, surf.query_knn(xnew, ynew)[2])
+    zold = surf.f2(xnew, ynew)[0]
+
+    cpoint = np.matrix([(xnew, ynew, zold)])
+    pt = np.ones(4)
+    pt[:3] = cpoint
+    pred = np.ravel(surf.cmat * np.matrix(pt).T)
+    if knn:
+        return (pred[0], pred[1], surf.query_knn(pred[0], pred[1])[2])
+    return (pred[0], pred[1], surf.query(pred[0], pred[1])[2])
 
 def get_surface(left, right):
     info = {}
@@ -199,6 +204,7 @@ def get_surface(left, right):
     left = contour_detector(left_image)
     right = contour_detector(right_image)
     correspondences = find_correspondences(left, right, 300, 70)
+    print "found ", len(correspondences), " correspondences"
     disparities = calculate_disparity(correspondences)
     left_pts = [a[0] for a in correspondences]
     right_pts = [a[1] for a in correspondences]
@@ -214,13 +220,31 @@ def get_surface(left, right):
         pred = cmat * np.matrix(pt).T
         newpts.append(np.ravel(pred).tolist())
     pts3d = newpts
+    newlst1 = [] # pts3d
+    newlst2 = [] # oldpts3d
+    newlst3 = [] # left
+    newlst4 = [] # right
+    for i in range(len(pts3d)):
+        point = pts3d[i]
+        if point[2] < -0.140 or point[2] > -0.090:
+            continue
+        else:
+            newlst1.append(pts3d[i])
+            newlst2.append(oldpts3d[i].tolist())
+            newlst3.append(left_pts[i])
+            newlst4.append(right_pts[i])
+    pts3d = newlst1
+    oldpts3d = np.array(newlst2)
+    left_pts = newlst3
+    right_pts = newlst4
+
     surf = fit_surface(pts3d)
     surf2 = fit_surface(oldpts3d)
     return Surface(surf, surf2, pts3d, left_pts, right_pts, oldpts3d)
     
 class Surface:
 
-    def __init__(self, f, f2, pts3d, left_pts, right_pts, oldpts3d, safety_check=True):
+    def __init__(self, f, f2, pts3d, left_pts, right_pts, oldpts3d, safety_check=False):
         self.f = f
         self.f2 = f2
         self.safety_check = safety_check
@@ -241,6 +265,11 @@ class Surface:
             ptsz.append(np.ceil(pt[2] * 1000000))
         self.neigh = KNeighborsClassifier(n_neighbors=2)
         self.neigh.fit(pts2d, ptsz)
+        self.f = scipy.interpolate.Rbf(np.matrix(pts3d)[:,0].ravel(), np.matrix(pts3d)[:,1].ravel(), np.matrix(pts3d)[:,2].ravel(), function='linear', epsilon=.1)
+        pts3d = np.array(pts3d).T
+        print pts3d.shape
+        print pts3d[:2,:].shape, pts3d[2,:].shape
+        self.f = KernelReg(pts3d[2,:], pts3d[:2,:], 'cc')
 
     def leftpixels_to_rframe(self, x, y):
         surf = self.f2
@@ -266,41 +295,54 @@ class Surface:
         pt = np.ones(4)
         pt[:3] = cpoint
         pred = self.cmat * np.matrix(pt).T
-        print pred
+        return pred
 
     def query(self, x, y):
-        temp = self.f(x, y)[0]
+        temp = self.f.fit(np.array((x, y)))[0][0]
         if not self.safety_check:
             return (x, y, temp)
-        print 'temp', temp
-        print temp
-        if temp < self.minimum:
+        if temp < self.minimum - 0.02:
             temp = self.query_knn(x, y)[2]
-        elif temp > self.maximum:
+        elif temp > self.maximum + 0.02:
             temp = self.query_knn(x, y)[2]
+        print 'asdf', temp
         return (x, y, temp)
 
     def query_knn(self, x, y):
         return (x, y, (self.neigh.predict([[x, y]]) / 1000000.0)[0])
 
     def visualize(self):
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
         pts3d = np.matrix(self.pts3d)
         f = self.f
         a, b =  np.ravel(np.min(pts3d, axis=0)), np.ravel(np.max(pts3d, axis=0))
-        extra_range = -0.01
-        xnew = np.arange(a[0] - extra_range,b[0] + extra_range,0.0001)
-        ynew = np.arange(a[1] - extra_range,b[1] + extra_range,0.0001)
-        znew = f(xnew, ynew)
-        plt.imshow(znew)
-        plt.show()  
+        extra_range = 0.0
+#         xnew = np.arange(a[0] - extra_range,b[0] + extra_range,0.0001)
+#         ynew = np.arange(a[1] - extra_range,b[1] + extra_range,0.0001)
+        X, Y = np.mgrid[a[0] + .05 :b[0] - .05 :100j, a[1]:b[1]:100j]
+        # znew = f.fit(X.ravel(), Y.ravel())
+#         znew = f(xnew, ynew)
+
+        # plt.imshow(znew.reshape((100, 100)), cmap=plt.cm.gist_earth_r,
+        #   extent=[a[0], b[0], a[1], b[1]])
+        # ax.set_xlim([a[0], b[0]])
+        # ax.set_ylim([a[1], b[1]])
+        # plt.plot(pts3d[:,0], pts3d[:,1],'o')
         
+        # plt.show()  
+        
+
+
+
+
 
 if __name__ == "__main__":
 
     SHOW_PLOTS = False
     
-    left_image = cv2.imread("left98.jpg")
-    right_image = cv2.imread("right98.jpg")
+    left_image = cv2.imread("left86.jpg")
+    right_image = cv2.imread("right86.jpg")
 
     info = {}
     f = open("../calibration_data/camera_left.p", "rb")
@@ -313,17 +355,21 @@ if __name__ == "__main__":
 
 
 
-    surf = get_surface("left98.jpg", "right98.jpg") # specify images
+    surf = get_surface("left86.jpg", "right86.jpg") # specify images
 
+    print surf.pts3d.tolist()
+    print np.max(surf.pts3d, axis=0)
 
+    print surf.maximum, surf.minimum
     # print f(-0.0125228, 0.01744704)
-    
-    print surf.leftpixels_to_rframe(1000, 400)
+
+    print 'test' + str(leftpixels_to_cframe(surf, surf.left_pts, surf.right_pts, surf.oldpts3d, 80, 276))
+    print surf.query(0.065395486704561773, 0.049723773830542037)
     # print pts3d[0]
     surf.visualize()
     plt.imshow(left_image)
     plt.show()
-
+    print "done"
     if SHOW_PLOTS:
         plt.imshow(left_image)
         plt.show()
