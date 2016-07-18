@@ -155,6 +155,12 @@ def exit():
 
 if __name__ == '__main__':
 
+    if len(sys.argv) > 0 and sys.argv[1] == "noisy":
+        print "adding gaussian noise"
+        noisy = True
+    else:
+        noisy = False
+
     nextpospublisher = rospy.Publisher("/cutting/next_position_cartesian", Pose)
 
     pts = load_robot_points()
@@ -162,6 +168,8 @@ if __name__ == '__main__':
     factor = 4
 
     pts = interpolation(pts, factor)
+
+
 
     print pts.shape
 
@@ -187,6 +195,9 @@ if __name__ == '__main__':
     notch.cut_notch(pt, psm1)
     time.sleep(3)
 
+    if noisy:
+        pts[:,:2] += np.random.randn(pts.shape[0], 2) * 0.001
+
     for i in range(pts.shape[0]-1):
         print i
         if i != 0:
@@ -211,6 +222,8 @@ if __name__ == '__main__':
 
     pts = interpolation(pts, factor)
 
+
+
     print pts.shape
 
     psm1 = robot("PSM1")
@@ -233,6 +246,9 @@ if __name__ == '__main__':
     psm1.move_cartesian_frame(frame)
     notch.cut_notch(pts[0,:], psm1)
     time.sleep(3)
+
+    if noisy:
+        pts[:,:2] += np.random.randn(pts.shape[0], 2) * 0.001
 
     for i in range(pts.shape[0]-1):
         print i

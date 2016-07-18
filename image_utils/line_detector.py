@@ -216,9 +216,9 @@ def detect_relative_position(cur_position, next_position, image, ratio, rect_wid
     else:
         return 0 # line is to the left
 
-def detect_new_point_rect(cur_position, image, ratio, heading, rect_width=800, rect_height=25, min_dist=10, max_dist = 1000, show_plots=False):
+def detect_new_point_rect(cur_position, image, ratio, heading, rect_width=1800, rect_height=25, min_dist=10, max_dist = 1000, show_plots=False):
     cur_position = (np.array(cur_position) / ratio).astype(int)
-
+    heading = 0
     dist = min_dist
     delta = np.array((np.cos(heading), np.sin(heading)))
     outer_color = (255, 255, 255)
