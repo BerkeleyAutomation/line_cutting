@@ -36,14 +36,14 @@ def callback_PSM1_actual(data):
     position = data.position
     psm1_pose = [position.x, position.y, position.z]
     print psm1_pose
-    f = open("calibration_data/gauze_pts.p", "a")
+    f = open('calibration_data/'+gauze_pts+'.p', "a")
     pickle.dump(psm1_pose, f)
     f.close()
     sub.unregister()
 
 def load_robot_points():
     lst = []
-    f3 = open("calibration_data/gauze_pts.p", "rb")
+    f3 = open('calibration_data/'+gauze_pts+'.p',"rb")
     while True:
         try:
             pos2 = pickle.load(f3)
@@ -100,14 +100,17 @@ def knn_clasifier():
     neigh = KNeighborsClassifier(n_neighbors=1)
     neigh.fit(pts, y)
     return neigh
-
+def switchCallback():
+    global gauze_pts
+    plot_points()
+    gauze_pts='gauze_pts2'
 
 if __name__ == '__main__':
     sub = None
     prs = []
-
-    open('calibration_data/gauze_pts.p', 'w+').close()
-    open("calibration_data/gauze_pts2.p", "w+").close()
+    gauze_pts='gauze_pts'
+    open('calibration_data/'+gauze_pts+'.p', 'w+').close()
+    #open("calibration_data/gauze_pts2.p", "w+").close()
 
     top = Tkinter.Tk()
     top.title('Calibration')
@@ -115,10 +118,11 @@ if __name__ == '__main__':
 
     B = Tkinter.Button(top, text="Record Position PSM1", command = startCallback)
     C = Tkinter.Button(top, text="Record Position PSM2", command = startCallback2)
-    D = Tkinter.Button(top, text="Exit", command = exitCallback)
+    D=Tkinter.Button(top, text="part 2", command = switchCallback)
+    F = Tkinter.Button(top, text="Exit", command = exitCallback)
 
     B.pack()
     C.pack()
     D.pack()
-
+    F.pack()
     top.mainloop()
