@@ -155,7 +155,7 @@ def exit():
 
 if __name__ == '__main__':
 
-    if len(sys.argv) > 0 and sys.argv[1] == "noisy":
+    if len(sys.argv) >= 1 and sys.argv[1] == "noisy":
         print "adding gaussian noise"
         noisy = True
     else:
