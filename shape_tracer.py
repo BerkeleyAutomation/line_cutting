@@ -64,7 +64,14 @@ def start_listening2():
     rospy.init_node('listener', anonymous=True)
     sub = rospy.Subscriber('/dvrk/PSM2/position_cartesian_current', Pose, callback_PSM2_actual)
     rospy.spin()
-
+def callback_PSM2_actual(data):
+    position = data.position
+    psm1_pose = [position.x, position.y, position.z]
+    print psm1_pose
+    f = open('calibration_data/gauze_grab_pt.p', "a")
+    pickle.dump(psm1_pose, f)
+    f.close()
+    sub.unregister()
 
 def plot_points():
     """
@@ -101,16 +108,18 @@ if __name__ == '__main__':
     gauze_pts='gauze_pts'
     open('calibration_data/'+gauze_pts+'.p', 'w+').close()
     open("calibration_data/gauze_pts2.p", "w+").close()
-
+    open("calibration_data/gauze_grab_pt.p", "w+").close()
     top = Tkinter.Tk()
     top.title('Calibration')
     top.geometry('400x200')
 
     B = Tkinter.Button(top, text="Record Position PSM1", command = startCallback)
     D=Tkinter.Button(top, text="part 2", command = switchCallback)
+    E=Tkinter.Button(top, text="grab point", command = startCallback2)
     F = Tkinter.Button(top, text="Exit", command = exitCallback)
 
     B.pack()
     D.pack()
+    E.pack()
     F.pack()
     top.mainloop()
