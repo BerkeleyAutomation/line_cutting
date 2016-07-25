@@ -66,10 +66,10 @@ def start_listening2():
     rospy.spin()
 def callback_PSM2_actual(data):
     position = data.position
-    psm1_pose = [position.x, position.y, position.z]
-    print psm1_pose
+    psm2_pose = [position.x, position.y, position.z]
+    print psm2_pose
     f = open('calibration_data/gauze_grab_pt.p', "a")
-    pickle.dump(psm1_pose, f)
+    pickle.dump(psm2_pose, f)
     f.close()
     sub.unregister()
 
