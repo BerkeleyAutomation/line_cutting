@@ -21,8 +21,8 @@ This file contains utilities that are used for a trajectory following curve cutt
 
 
 def home_robot():
-    pos = [0.023580864372, 0.00699340564912, -0.0485527311586]
-    psm1.move_cartesian_frame(get_frame_psm1(pos))
+    pos1 = [0.023580864372, 0.00699340564912, -0.0485527311586]
+    psm1.move_cartesian_frame(get_frame_psm1(pos1))
     time.sleep(1)
 
 def initialize(pts):
@@ -30,7 +30,7 @@ def initialize(pts):
     Initialize both arms to a fixed starting position/rotation.
     """
     home_robot()
-    home_psm2()
+    
     return
 
 def get_frame_psm1(pos, rot=[0.617571885272, 0.59489495214, 0.472153066551, 0.204392867261]):
@@ -133,11 +133,11 @@ def grab_gauze():
     psm2.open_gripper(-20)
     print "closing"
     time.sleep(2)
-    # pose[2] += 0.005
-    # print pose
-    # tfx_pose = get_frame_psm1(pose)
-    # psm2.move_cartesian_frame(tfx_pose)
-    # print psm2.get_current_cartesian_position()
+    pose[2] += 0.005
+    print pose
+    tfx_pose = get_frame_psm1(pose)
+    psm2.move_cartesian_frame(tfx_pose)
+    print psm2.get_current_cartesian_position()
 
 
 def home_psm2():
@@ -156,6 +156,8 @@ def exit():
     psm1.close_gripper()
     time.sleep(2)
     psm1.open_gripper(15)
+    time.sleep(2)
+    psm1.move_cartesian_frame(get_frame_psm1(psm1.get_current_cartesian_position().position))
     time.sleep(2)
     notch.psm1_translation((0, 0, 0.02), psm1, psm1.get_current_cartesian_position().orientation)
     home_robot()
@@ -185,6 +187,7 @@ if __name__ == '__main__':
     psm2 = robot("PSM2")
 
     initialize(pts)
+    home_psm2()
     grab_gauze()
     angles = []
     for i in range(pts.shape[0]-1):
@@ -254,7 +257,7 @@ if __name__ == '__main__':
     psm1.move_cartesian_frame(frame)
     notch.cut_notch(pts[0,:], psm1)
     time.sleep(3)
-
+    home_psm2()
     if noisy:
         pts[:,:2] += np.random.randn(pts.shape[0], 2) * 0.001
 
