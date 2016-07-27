@@ -18,6 +18,7 @@ import image_geometry
 import scipy.interpolate
 from sklearn.neighbors import KNeighborsClassifier
 import scipy.ndimage
+from blob_detector import *
 
 ### TO DO: right image/left image preprocessing to increase robustness
 
@@ -87,6 +88,7 @@ def remove_blobs(full_image, resized_image, gray, ratio, show_plots=False):
     # loop over the contours
     
     hsv = cv2.cvtColor(resized_image, cv2.COLOR_BGR2HSV)
+<<<<<<< HEAD
     minv = 1000
     for c in cnts:
         mask = np.zeros(gray.shape,np.uint8)
@@ -95,10 +97,20 @@ def remove_blobs(full_image, resized_image, gray, ratio, show_plots=False):
         minv = min(mean_val[2], minv)
     print minv
 
+=======
+    # minv = 1000
+    # for c in cnts:
+    #     mask = np.zeros(gray.shape,np.uint8)
+    #     cv2.drawContours(mask,[c],0,255,-1)
+    #     mean_val = np.array(cv2.mean(hsv,mask = mask))
+    #     minv = min(mean_val[2], minv)
+    # print minv
+>>>>>>> c03034c128c60196ba79ba6b85ad84ff805f8d21
     for c in cnts:
         mask = np.zeros(gray.shape,np.uint8)
         cv2.drawContours(mask,[c],0,255,-1)
         mean_val = np.array(cv2.mean(hsv,mask = mask))
+<<<<<<< HEAD
         if np.max(mean_val) < 100 or mean_val[2] < minv:
             continue
         else:
@@ -107,17 +119,36 @@ def remove_blobs(full_image, resized_image, gray, ratio, show_plots=False):
                 cv2.drawContours(gray, [c], -1, (0, 0, 0), -1)
             else:
                 pass
+=======
+        if np.max(mean_val) < 70:
+            print 'asdf', mean_val
+            continue
+        else:
+            print cv2.contourArea(c)
+            if cv2.contourArea(c) < 1500:
+                cv2.drawContours(gray, [c], -1, (0, 0, 0), -1)
+            # else:
+                # pass
+>>>>>>> c03034c128c60196ba79ba6b85ad84ff805f8d21
     if show_plots:
         cv2.imshow("a", gray)
         cv2.waitKey(0)
     return gray
 
-def detect_relative_position(cur_position, next_position, image, ratio, rect_width=400, rect_height=50, show_plots=False):
+def detect_relative_position(cur_position, next_position, image, ratio, rect_width=400, rect_height=50, distance=100, show_plots=False):
     """
     Takes in current and next robot position in pixel space and a full image and returns whether or not the robot is to the right or left.
     """
     cur_position, next_position = np.array(cur_position), np.array(next_position)
     delta = next_position - cur_position
+
+    factor = distance / np.linalg.norm(np.array(delta))
+    next_position = cur_position + factor * np.array(delta)
+
+    cur_position, next_position = np.array(cur_position), np.array(next_position)
+    delta = next_position - cur_position
+
+
     slope = np.array((delta[0], delta[1]))
     if np.linalg.norm(slope) != 0:
         slope =  slope / np.linalg.norm(slope)
@@ -207,12 +238,203 @@ def detect_relative_position(cur_position, next_position, image, ratio, rect_wid
     else:
         return 0 # line is to the left
 
+def detect_new_point_rect(cur_position, image, ratio, heading, rect_width=1800, rect_height=25, min_dist=10, max_dist = 1000, show_plots=False):
+    cur_position = (np.array(cur_position) / ratio).astype(int)
+    heading = 0
+    dist = min_dist
+    delta = np.array((np.cos(heading), np.sin(heading)))
+    outer_color = (255, 255, 255)
+    found = False
 
+    while dist < max_dist:
+        next_position = cur_position - dist * np.array(delta)
+        slope = np.array((delta[0], delta[1]))
+        if np.linalg.norm(slope) != 0:
+            slope =  slope / np.linalg.norm(slope)
+        perp_slope = np.array((-delta[1], delta[0]))
+        if np.linalg.norm(perp_slope) != 0:
+            perp_slope = perp_slope / np.linalg.norm(perp_slope)
+        pts = []
+        # points defining the corners of a rectangle
+        pts.append(next_position + perp_slope * rect_width / 2)
+        pts.append(pts[-1] + slope * rect_height/2)
+        pts.append(pts[-1] - slope * rect_height)
+        pts.pop(-3)
+        pts.append(next_position - perp_slope * rect_width / 2)
+        pts.append(pts[-1] + slope * rect_height/2)
+        pts.append(pts[-1] - slope * rect_height)
+        pts.pop(-3)
+        pts = np.array([pt.tolist() for pt in pts])
+
+        xmax = int(np.ceil(np.max(pts[:,0].tolist() + [image.shape[1]])))
+        xmin = int(np.floor(np.min(pts[:,0].tolist() + [0])))
+
+        ymax = int(np.ceil(np.max(pts[:,1].tolist() + [image.shape[0]])))
+        ymin = int(np.floor(np.min(pts[:,1].tolist() + [0])))
+
+        xstart = -ymin
+        xend = xstart + image.shape[0]
+
+        ystart = -xmin
+        yend = ystart + image.shape[1]
+
+        newshape = (ymax - ymin, xmax - xmin)
+
+        new_image = np.zeros(newshape)
+        new_image[xstart:xend,ystart:yend] = image
+        new_image = new_image.astype(np.uint8)
+
+        newpts = []
+        for i in range(pts.shape[0]):
+            pt = np.floor(pts[i,:] + np.array((ystart, xstart))).astype(int)
+            newpts.append(pt.tolist())
+        newpts[2], newpts[3] = newpts[3], newpts[2]
+        cv2.drawContours(new_image, [np.array(newpts)], -1, (0,255,0), 3)
+
+        mask = np.zeros(np.array(new_image.shape)[:2],np.uint8)
+        cv2.drawContours(mask,[np.array(newpts)],0,255,-1)
+
+        new_image *= mask
+        if show_plots:
+            plt.imshow(image)
+            plt.show()
+            plt.imshow(new_image, cmap='Greys_r')
+            plt.show()
+            plt.imshow(mask, cmap='Greys_r')
+            plt.show()
+            plt.imshow(new_image[xstart:xend,ystart:yend], cmap='Greys_r')
+            plt.show()
+
+        cnts = cv2.findContours(new_image[xstart:xend,ystart:yend], cv2.RETR_EXTERNAL,
+        cv2.CHAIN_APPROX_SIMPLE)
+        cnts = cnts[0] if imutils.is_cv2() else cnts[1]
+
+        distance = float('inf')
+        best_center = None
+        for c in cnts:
+            M = cv2.moments(c)
+            cX = int((M["m10"] / M["m00"]) * ratio) if M["m00"] != 0 else 0
+            cY = int((M["m01"] / M["m00"]) * ratio) if M["m00"] != 0 else 0
+            center = np.array((cX, cY))
+            if np.linalg.norm(center - next_position) < distance:
+                distance = np.linalg.norm(center - next_position)
+                best_center = center
+        if best_center == None:
+            dist += 20
+        else:
+            return best_center
+    return
+
+
+def detect_new_point_circle(cur_position, image, ratio, heading, thickness=20, show_plots=False):
+    """
+    Takes in current and next robot position in pixel space and a full image and returns the next pixel of the line in pixel space.
+    TODO: add something to mask out the gripper itself. Uses a circle mask to detect the next point.
+    """
+    center = (np.array(cur_position) / ratio).astype(int)
+
+    delta = np.array((np.cos(heading), np.sin(heading))) * thickness
+    print delta
+    print center
+    outer_radii = np.r_[10:1000:20]
+    inner_radii = np.r_[0:980:20]
+
+    inner_color = (0,0,0)
+    outer_color = (255, 255, 255)
+
+    found = False
+
+
+
+    idx = 0
+    while not found and outer_radii[idx] < outer_radii[-1]:
+
+        xmin = min(0, center[0] - outer_radii[idx])
+        xmax = max(image.shape[0], center[0] + outer_radii[idx])
+        ymin = min(0, center[1] - outer_radii[idx])
+        ymax = max(image.shape[1], center[1] + outer_radii[idx])
+        newshape = (xmax - xmin, ymax - ymin)
+        new_image = np.zeros(newshape)
+        new_image[-xmin:-xmin + image.shape[0],-ymin:-ymin + image.shape[1]] = image
+        new_image = new_image.astype(np.uint8)
+
+        mask = np.zeros(np.array(new_image.shape)[:2],np.uint8)
+        new_center = (-xmin + center[0], -ymin + center[1])
+        cv2.circle(mask, new_center, outer_radii[idx], outer_color, -1)
+        cv2.circle(mask, (int(new_center[0] + delta[0]), int(new_center[1] + delta[1])), inner_radii[idx], inner_color, -1)
+        idx += 1
+        new_image *= mask
+
+        cnts = cv2.findContours(new_image[-xmin:-xmin + image.shape[0],-ymin:-ymin + image.shape[1]], cv2.RETR_EXTERNAL,
+            cv2.CHAIN_APPROX_SIMPLE)
+        cnts = cnts[0] if imutils.is_cv2() else cnts[1]
+
+        dist = float('inf')
+        best_center = None
+        for c in cnts:
+            found = True
+            M = cv2.moments(c)
+            cX = int((M["m10"] / M["m00"]) * ratio) if M["m00"] != 0 else 0
+            cY = int((M["m01"] / M["m00"]) * ratio) if M["m00"] != 0 else 0
+            center = np.array((cX, cY))
+            if np.linalg.norm(center - next_position) < dist:
+                dist = np.linalg.norm(center - next_position)
+                best_center = center
+
+        if show_plots:
+            plt.imshow(new_image, cmap='Greys_r')
+            plt.show()
+            plt.imshow(mask, cmap='Greys_r')
+            plt.show()
+    return best_center
+
+
+def get_pixel_from3D(camera_matrix, position, camera_info, offset):
+    Trobot = np.zeros((4,4))
+    Trobot[:3,:] = np.copy(camera_matrix)
+    Trobot[3,3] = 1
+    Rrobot = np.linalg.inv(Trobot)
+
+    x = np.ones((4,1))
+
+    x[:3,0] = np.squeeze(position)
+
+    cam_frame = np.dot(Rrobot,x)
+
+    Pcam = np.array(camera_info.P).reshape(3,4)
+
+    V = np.dot(Pcam, cam_frame)
+
+    V = np.array((int(V[0]/V[2]), int(V[1]/V[2])))
+
+    V[0] = V[0] + offset[0]
+    V[1] = V[1] + offset[1]
+
+    return V
+
+
+def plot_points(pts):
+    """
+    Plots points in robot_frame. Axes may need to be edited.
+    """
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import Axes3D
+    if pts.shape[1] == 0:
+        print "no points to show"
+        return
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(np.array(pts[:,0]), np.array(pts[:,1]), np.array(pts[:,2]),c='r')
+    ax.set_xlim3d(0, 0.2)
+    ax.set_ylim3d(-0.1, 0.1)
+    ax.set_zlim3d(-0.15,0.05)
+    plt.show()
 
 if __name__ == "__main__":
 
     SHOW_PLOTS = True
 
+<<<<<<< HEAD
     left_image = cv2.imread("left12.jpg")
 
     cur_position = (1000, 300)
@@ -221,3 +443,40 @@ if __name__ == "__main__":
     left_gray, ratio = line_detector_drawn(left_image, SHOW_PLOTS)
     rel = detect_relative_position(cur_position, next_position, left_gray, ratio, show_plots=True)
     print rel
+=======
+    surf = get_surface("left86.jpg", "right86.jpg") # specify images
+
+
+    left_image = cv2.imread("left86.jpg")
+    plt.imshow(np.array(left_image))
+    plt.show()
+
+    cur_position = (2000, 400)
+    next_position = (1990, 400)
+
+    left_gray, ratio = line_detector_drawn(left_image, SHOW_PLOTS)
+    rel = detect_relative_position(cur_position, next_position, left_gray, ratio, show_plots=False)
+    print rel
+
+    heading = np.arctan((np.array(cur_position) - np.array(next_position))[1] / (np.array(cur_position) - np.array(next_position))[0])
+    traj = []
+    pxtraj = []
+
+    for i in range(100):
+        cur_position = next_position
+        next_position = detect_new_point_rect(cur_position, left_gray, ratio, heading, show_plots=False)
+        if next_position == None:
+            break
+        heading = np.arctan((np.array(cur_position) - np.array(next_position))[1] / (np.array(cur_position) - np.array(next_position))[0])
+        pos = leftpixels_to_cframe(surf, surf.left_pts, surf.right_pts, surf.oldpts3d, next_position[0], next_position[1], knn=False)
+        traj.append(pos)
+        pxtraj.append(next_position.tolist())
+    print traj[2:-1]
+    print pxtraj[2:-1]
+    pxtraj = np.matrix(pxtraj)
+    plt.scatter(pxtraj[:,0], pxtraj[:,1])
+    plt.show()
+    plot_points(np.matrix(traj))
+
+    # print surf.pts3d
+>>>>>>> c03034c128c60196ba79ba6b85ad84ff805f8d21
