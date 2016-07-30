@@ -26,7 +26,7 @@ def psm1_translation(translation, psm1, rotation=None):
         psm1.move_cartesian_frame(get_frame(pos, rotation))
         time.sleep(2)
 
-def cut_notch(position, psm1):
+def cut_notch(position, psm1, angle=0.0):
     # def home_robot(pos):
     #     psm1.move_cartesian_frame(get_frame(pos))
     #     time.sleep(1)
@@ -46,7 +46,7 @@ def cut_notch(position, psm1):
     time.sleep(2)
     psm1.open_gripper(80)
     time.sleep(3)
-    rotation = [94.299363207+0, -4.72728031036, 86.1958002688]
+    rotation = [94.299363207+angle, -4.72728031036, 86.1958002688]
     rot = tfx.tb_angles(rotation[0], rotation[1], rotation[2])
     psm1_translation((0.006,0,-0.009), psm1, rot)
     time.sleep(2)

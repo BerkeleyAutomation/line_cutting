@@ -149,7 +149,7 @@ def exit():
     time.sleep(2)
     psm1.open_gripper(15)
     time.sleep(2)
-    notch.psm1_translation((0, 0, 0.02), psm1, psm1.get_current_cartesian_position().orientation)
+    notch.psm1_translation((0, -0.01, 0.02), psm1, psm1.get_current_cartesian_position().orientation)
     home_robot()
 
 
@@ -216,11 +216,13 @@ if __name__ == '__main__':
 
     exit()
 
+    initial = pts[0,:]
+
     pts = load_robot_points(fname="calibration_data/gauze_pts2.p")
 
     factor = 4
 
-    pts = interpolation(pts, factor)
+    pts = np.vstack((initial, interpolation(pts, factor))
 
 
 
