@@ -68,7 +68,10 @@ def load_robot_points(fname="calibration_data/gauze_pts.p"):
         except EOFError:
             f3.close()
             return np.matrix(lst)
-
+def entry_frame(rot=[.46428,.45636,.51234,.56008]):
+    
+    points=load_robot_points()
+    return get_frame_psm1(points[0],rot)
 def interpolation(arr, factor):
     """
     Given a matrix of x,y,z coordinates, output a linearly interpolated matrix of coordinates with factor * arr.shape[1] points.
@@ -185,7 +188,7 @@ if __name__ == '__main__':
     psm2 = robot("PSM2")
 
     initialize(pts)
-    grab_gauze()
+    #grab_gauze()
     angles = []
     for i in range(pts.shape[0]-1):
         pos = pts[i,:]
@@ -251,10 +254,13 @@ if __name__ == '__main__':
     angles = savgol_filter(angles, factor * (pts.shape[0]/12) + 1, 2)
 
     frame = get_frame_next(np.ravel(pts[0,:]), np.ravel(pts[1,:]), offset=0.004, angle = angles[0])
-    psm1.move_cartesian_frame(frame)
-    notch.cut_notch(pts[0,:], psm1)
+    #psm1.move_cartesian_frame(frame)
+    psm1.move_cartesian_frame(entry_frame())
     time.sleep(3)
-
+    notch.cut_notch(entry_frame().position, psm1)
+    time.sleep(3)
+    #home_psm2()
+    time.sleep(3)
     if noisy:
         pts[:,:2] += np.random.randn(pts.shape[0], 2) * 0.001
 

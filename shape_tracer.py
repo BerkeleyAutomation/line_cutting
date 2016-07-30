@@ -29,7 +29,7 @@ def exitCallback():
     global prs
     for process in prs:
         process.terminate()
-    plot_points()
+    #plot_points()
     sys.exit()
 
 def callback_PSM1_actual(data):
