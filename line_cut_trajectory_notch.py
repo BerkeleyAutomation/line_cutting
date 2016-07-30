@@ -152,6 +152,17 @@ def exit():
     notch.psm1_translation((0, -0.01, 0.02), psm1, psm1.get_current_cartesian_position().orientation)
     home_robot()
 
+def reenter(pos):
+    rot = [-0.048431809697, 0.758771443303, 0.641022616096, 0.104929796963]
+    pos = np.ravel(pos)
+    pos[1] -= 0.013
+    pos[2] -= 0.004
+    frame = get_frame_psm1(pos, rot)
+    psm1.move_cartesian_frame(frame)
+    psm1.open_gripper(50)
+
+
+
 
 if __name__ == '__main__':
 
@@ -216,20 +227,16 @@ if __name__ == '__main__':
 
     exit()
 
-    initial = pts[0,:]
-
     pts = load_robot_points(fname="calibration_data/gauze_pts2.p")
 
     factor = 4
 
-    pts = np.vstack((initial, interpolation(pts, factor))
+    pts = interpolation(pts, factor)
 
 
 
     print pts.shape
 
-    psm1 = robot("PSM1")
-    psm2 = robot("PSM2")
 
     initialize(pts)
 
@@ -245,8 +252,9 @@ if __name__ == '__main__':
     angles = savgol_filter(angles, factor * (pts.shape[0]/12) + 1, 2)
 
     frame = get_frame_next(np.ravel(pts[0,:]), np.ravel(pts[1,:]), offset=0.004, angle = angles[0])
-    psm1.move_cartesian_frame(frame)
-    notch.cut_notch(pts[0,:], psm1)
+    # psm1.move_cartesian_frame(frame)
+    # notch.cut_notch(pts[0,:], psm1)
+    reenter(pts[0,:].ravel())
     time.sleep(3)
 
     if noisy:
