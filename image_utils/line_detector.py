@@ -88,6 +88,16 @@ def remove_blobs(full_image, resized_image, gray, ratio, show_plots=False):
     # loop over the contours
     
     hsv = cv2.cvtColor(resized_image, cv2.COLOR_BGR2HSV)
+<<<<<<< HEAD
+    minv = 1000
+    for c in cnts:
+        mask = np.zeros(gray.shape,np.uint8)
+        cv2.drawContours(mask,[c],0,255,-1)
+        mean_val = np.array(cv2.mean(hsv,mask = mask))
+        minv = min(mean_val[2], minv)
+    print minv
+
+=======
     # minv = 1000
     # for c in cnts:
     #     mask = np.zeros(gray.shape,np.uint8)
@@ -95,10 +105,21 @@ def remove_blobs(full_image, resized_image, gray, ratio, show_plots=False):
     #     mean_val = np.array(cv2.mean(hsv,mask = mask))
     #     minv = min(mean_val[2], minv)
     # print minv
+>>>>>>> c03034c128c60196ba79ba6b85ad84ff805f8d21
     for c in cnts:
         mask = np.zeros(gray.shape,np.uint8)
         cv2.drawContours(mask,[c],0,255,-1)
         mean_val = np.array(cv2.mean(hsv,mask = mask))
+<<<<<<< HEAD
+        if np.max(mean_val) < 100 or mean_val[2] < minv:
+            continue
+        else:
+            print cv2.contourArea(c)
+            if cv2.contourArea(c) < 2000:
+                cv2.drawContours(gray, [c], -1, (0, 0, 0), -1)
+            else:
+                pass
+=======
         if np.max(mean_val) < 70:
             print 'asdf', mean_val
             continue
@@ -108,6 +129,7 @@ def remove_blobs(full_image, resized_image, gray, ratio, show_plots=False):
                 cv2.drawContours(gray, [c], -1, (0, 0, 0), -1)
             # else:
                 # pass
+>>>>>>> c03034c128c60196ba79ba6b85ad84ff805f8d21
     if show_plots:
         cv2.imshow("a", gray)
         cv2.waitKey(0)
@@ -178,15 +200,15 @@ def detect_relative_position(cur_position, next_position, image, ratio, rect_wid
     cv2.drawContours(mask,[np.array(newpts)],0,255,-1)
 
     new_image *= mask
-    if show_plots:
-        plt.imshow(image)
-        plt.show()
-        plt.imshow(new_image, cmap='Greys_r')
-        plt.show()
-        plt.imshow(mask, cmap='Greys_r')
-        plt.show()
-        plt.imshow(new_image[xstart:xend,ystart:yend], cmap='Greys_r')
-        plt.show()
+    # if show_plots:
+    #     plt.imshow(image)
+    #     plt.show()
+    #     plt.imshow(new_image, cmap='Greys_r')
+    #     plt.show()
+    #     plt.imshow(mask, cmap='Greys_r')
+    #     plt.show()
+    #     plt.imshow(new_image[xstart:xend,ystart:yend], cmap='Greys_r')
+    #     plt.show()
 
 
     cnts = cv2.findContours(new_image[xstart:xend,ystart:yend], cv2.RETR_EXTERNAL,
@@ -410,8 +432,18 @@ def plot_points(pts):
 
 if __name__ == "__main__":
 
-    SHOW_PLOTS = False
+    SHOW_PLOTS = True
 
+<<<<<<< HEAD
+    left_image = cv2.imread("left12.jpg")
+
+    cur_position = (1000, 300)
+    next_position = (990, 290)
+
+    left_gray, ratio = line_detector_drawn(left_image, SHOW_PLOTS)
+    rel = detect_relative_position(cur_position, next_position, left_gray, ratio, show_plots=True)
+    print rel
+=======
     surf = get_surface("left86.jpg", "right86.jpg") # specify images
 
 
@@ -447,3 +479,4 @@ if __name__ == "__main__":
     plot_points(np.matrix(traj))
 
     # print surf.pts3d
+>>>>>>> c03034c128c60196ba79ba6b85ad84ff805f8d21
