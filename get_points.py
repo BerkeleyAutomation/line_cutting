@@ -68,15 +68,15 @@ def fit_plane(topx,topy,botx,boty,scale=.5,z=69):#scale and z needs to be experi
 	for i in range(topx.size):
 		top_pts.append([topx[i]*scale,topy[i]*scale,z])
 		bot_pts.append([botx[i]*scale,boty[i]*scale,z])
-	top,bot=np.array(top_pts),np.array(bot_pts)
+	top,bot=np.matrix(top_pts),np.matrix(bot_pts)
 	return top,bot
 
 def plot_points(top,bottom):
 	
 	fig = plt.figure()
 	ax = fig.add_subplot(111, projection='3d') 
-	plt.scatter(top[:,0],top[:,1],top[:,2])
-	plt.scatter(bottom[:,0],bottom[:,1],bottom[:,2])
+	ax.scatter(np.array(top[:,0]),np.array(top[:,1]),np.array(top[:,2]))
+	ax.scatter(np.array(bottom[:,0]),np.array(bottom[:,1]),np.array(bottom[:,2]))
 	plt.show()
 def main():
 	
@@ -87,8 +87,15 @@ def main():
 	cv2.destroyAllWindows()
 	pts,x,y=get_raw_points(processed)
 	xc,yc,R=center_and_radius(x,y)
+	print "raw radius=",R
 	topx,topy,botx,boty=get_circle(xc,yc,R)
+	# plt.axis([0,500,0,500])
+	# plt.scatter(x,y,color='b')
+	# plt.scatter(topx,topy,c='r')
+	# plt.scatter(botx,boty,c='r')
+	# plt.show()
 	top,bottom=fit_plane(topx,topy,botx,boty)
+	np.savetxt('debug.txt',top)
 	plot_points(top,bottom)
 	
 	
