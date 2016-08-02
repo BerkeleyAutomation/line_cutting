@@ -72,6 +72,9 @@ def reentry_frame():
     pts=load_robot_points()
     rotation[0.46428,0.45636,0.51234,0.56008]
     return get_frame_psm1(pts[0],rot=rotation)
+def last_pt()
+    pts=load_robot_points()
+    return pts[-1]
 def interpolation(arr, factor):
     """
     Given a matrix of x,y,z coordinates, output a linearly interpolated matrix of coordinates with factor * arr.shape[1] points.
@@ -228,7 +231,7 @@ if __name__ == '__main__':
     exit()
 
     pts = load_robot_points(fname="calibration_data/gauze_pts2.p")
-
+    pts[-1]=last_pt()
     factor = 4
 
     pts = interpolation(pts, factor)
