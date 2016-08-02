@@ -176,7 +176,7 @@ if __name__ == '__main__':
     psm1 = robot("PSM1")
     psm2 = robot("PSM2")
 
-    initialize(pts)
+    # initialize(pts)
 
     angles = []
     for i in range(pts.shape[0]-1):
@@ -207,16 +207,16 @@ if __name__ == '__main__':
         frame = get_frame_next(np.ravel(pos), np.ravel(nextpos), offset=0.004, angle = angles[i])
         nextpos = np.ravel(nextpos)
         nextpospublisher.publish(Pose(Point(nextpos[0], nextpos[1], nextpos[2]), frame.orientation))
-
+        print pos
         psm1.move_cartesian_frame(frame)
 
         curpt = np.ravel(np.array(psm1.get_current_cartesian_position().position))
         pts[i,:] = curpt
         pts[i+1,:2] = savgol_filter(pts[:,:2], 5, 2, axis=0)[i+1,:] #probably going to make a small change to this tomorrow
 
-    pts[:,2] += 0.004
-    for j in range(pts.shape[0] - 9):
-        i = pts.shape[0] - 10 - j
+    pts[:,2] += 0.007
+    for j in range(pts.shape[0] - 10):
+        i = pts.shape[0] - 2 - j
         print i
         pos = pts[i,:]
         nextpos = pts[i+1,:]
