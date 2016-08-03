@@ -214,7 +214,7 @@ if __name__ == '__main__':
         pts[i,:] = curpt
         pts[i+1,:2] = savgol_filter(pts[:,:2], 5, 2, axis=0)[i+1,:] #probably going to make a small change to this tomorrow
 
-    pts[:,2] += 0.007
+    pts[:,2] += 0.01
     for j in range(pts.shape[0] - 10):
         i = pts.shape[0] - 2 - j
         print i
@@ -227,12 +227,14 @@ if __name__ == '__main__':
 
     # exit()
 
+    last = pts[0,:]
+    lst[0,2] += 0.01
     pts = load_robot_points(fname="calibration_data/gauze_pts2.p")
 
     factor = 4
 
     pts = interpolation(pts, factor)
-
+    pts = np.vstack((last, pts))
 
 
     print pts.shape
