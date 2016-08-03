@@ -64,6 +64,7 @@ def start_listening2():
     rospy.init_node('listener', anonymous=True)
     sub = rospy.Subscriber('/dvrk/PSM2/position_cartesian_current', Pose, callback_PSM2_actual)
     rospy.spin()
+
 def callback_PSM2_actual(data):
     position = data.position
     psm2_pose = [position.x, position.y, position.z]
