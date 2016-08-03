@@ -209,6 +209,12 @@ if __name__ == '__main__':
     notch.cut_notch(pt, psm1)
     time.sleep(3)
 
+    # for i in range(15):
+    #     notch.psm1_translation((.003, 0, 0.0), psm1, psm1.get_current_cartesian_position().orientation)
+    #     cut()
+    # for i in range(15):
+    #     notch.psm1_translation((-.003, 0, 0.0), psm1, psm1.get_current_cartesian_position().orientation)
+
     if noisy:
         pts[:,:2] += np.random.randn(pts.shape[0], 2) * 0.001
 
@@ -268,6 +274,9 @@ if __name__ == '__main__':
     notch.psm1_translation((-.003, 0, 0.0), psm1, psm1.get_current_cartesian_position().orientation)
     if noisy:
         pts[:,:2] += np.random.randn(pts.shape[0], 2) * 0.001
+
+
+
 
     for i in range(pts.shape[0]-1):
         print i
