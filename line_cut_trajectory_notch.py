@@ -224,7 +224,7 @@ if __name__ == '__main__':
         nextpos = np.ravel(nextpos)
 
         psm1.move_cartesian_frame(frame)
-        if j < 4:
+        if j % 4 == 0:
             cut(-10.0)
 
     # exit()
@@ -263,9 +263,9 @@ if __name__ == '__main__':
     if noisy:
         pts[:,:2] += np.random.randn(pts.shape[0], 2) * 0.001
 
-    for i in range(1, pts.shape[0]-1):
+    for i in range(pts.shape[0]-1):
         print i
-        if i % 4 == 0:
+        if i != 0:
             cut()
         pos = pts[i,:]
         nextpos = pts[i+1,:]
