@@ -176,7 +176,7 @@ if __name__ == '__main__':
     psm1 = robot("PSM1")
     psm2 = robot("PSM2")
 
-    # initialize(pts)
+    initialize(pts)
 
     angles = []
     for i in range(pts.shape[0]-1):
@@ -207,16 +207,16 @@ if __name__ == '__main__':
         frame = get_frame_next(np.ravel(pos), np.ravel(nextpos), offset=0.004, angle = angles[i])
         nextpos = np.ravel(nextpos)
         nextpospublisher.publish(Pose(Point(nextpos[0], nextpos[1], nextpos[2]), frame.orientation))
-        print pos
+
         psm1.move_cartesian_frame(frame)
 
         curpt = np.ravel(np.array(psm1.get_current_cartesian_position().position))
         pts[i,:] = curpt
         pts[i+1,:2] = savgol_filter(pts[:,:2], 5, 2, axis=0)[i+1,:] #probably going to make a small change to this tomorrow
 
-    pts[:,2] += 0.01
-    for j in range(pts.shape[0] - 10):
-        i = pts.shape[0] - 2 - j
+    pts[:,2] += 0.009
+    for j in range(pts.shape[0] - 13):
+        i = pts.shape[0] - 10 - j
         print i
         pos = pts[i,:]
         nextpos = pts[i+1,:]
@@ -224,17 +224,17 @@ if __name__ == '__main__':
         nextpos = np.ravel(nextpos)
 
         psm1.move_cartesian_frame(frame)
+        if j < 4:
+            cut(-10.0)
 
     # exit()
 
-    last = pts[0,:]
-    lst[0,2] += 0.01
     pts = load_robot_points(fname="calibration_data/gauze_pts2.p")
 
     factor = 4
 
     pts = interpolation(pts, factor)
-    pts = np.vstack((last, pts))
+
 
 
     print pts.shape
@@ -263,9 +263,9 @@ if __name__ == '__main__':
     if noisy:
         pts[:,:2] += np.random.randn(pts.shape[0], 2) * 0.001
 
-    for i in range(pts.shape[0]-1):
+    for i in range(1, pts.shape[0]-1):
         print i
-        if i != 0:
+        if i % 4 == 0:
             cut()
         pos = pts[i,:]
         nextpos = pts[i+1,:]
