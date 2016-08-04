@@ -149,7 +149,7 @@ def exit():
     time.sleep(2)
     psm1.open_gripper(15)
     time.sleep(2)
-    notch.psm1_translation((0, -0.015, 0.02), psm1, psm1.get_current_cartesian_position().orientation)
+    notch.psm1_translation((0, 0.015, 0.02), psm1, psm1.get_current_cartesian_position().orientation)
     home_robot()
 
 
@@ -226,6 +226,8 @@ if __name__ == '__main__':
         psm1.move_cartesian_frame(frame)
         if j % 4 == 0:
             cut(-10.0)
+
+    cut(-10.0)
 
     # exit()
 
