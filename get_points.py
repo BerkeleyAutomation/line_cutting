@@ -16,7 +16,8 @@ from geometry_msgs.msg import Point
 from image_saver import ImageSaver
 import least_square_circle as sqcirc
 from mpl_toolkits.mplot3d import Axes3D
-
+from ImageSubscriber import ImageSubscriber
+	
 def process_img(fname):
 	""" converts image to a binary img and thins a little"""
 	img = cv2.imread(fname,1)
@@ -68,6 +69,7 @@ def fit_plane(topx,topy,botx,boty,scale=.5,z=69):#scale and z needs to be experi
 	for i in range(topx.size):
 		top_pts.append([topx[i]*scale,topy[i]*scale,z])
 		bot_pts.append([botx[i]*scale,boty[i]*scale,z])
+
 	top,bot=np.matrix(top_pts),np.matrix(bot_pts)
 	return top,bot
 
@@ -79,8 +81,10 @@ def plot_points(top,bottom):
 	ax.scatter(np.array(bottom[:,0]),np.array(bottom[:,1]),np.array(bottom[:,2]))
 	plt.show()
 def main():
-	
+	a=ImageSubscriber()
+	cv2.imwrite('image_utils/left1.jpg',a.left_image)
 	processed=process_img('image_utils/left1.jpg')
+	#processed=process_img('image_utils/right1.jpg')
 	cv2.imshow('processed',processed)
 	print processed.shape
 	cv2.waitKey(0)
@@ -89,11 +93,11 @@ def main():
 	xc,yc,R=center_and_radius(x,y)
 	print "raw radius=",R
 	topx,topy,botx,boty=get_circle(xc,yc,R)
-	# plt.axis([0,500,0,500])
-	# plt.scatter(x,y,color='b')
-	# plt.scatter(topx,topy,c='r')
-	# plt.scatter(botx,boty,c='r')
-	# plt.show()
+	plt.axis([0,500,0,500])
+	plt.scatter(x,y,color='b')
+	plt.scatter(topx,topy,c='r')
+	plt.scatter(botx,boty,c='r')
+	plt.show()
 	top,bottom=fit_plane(topx,topy,botx,boty)
 	np.savetxt('debug.txt',top)
 	plot_points(top,bottom)
