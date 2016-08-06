@@ -78,7 +78,6 @@ def interpolation(arr, factor):
     t = np.linspace(0,x.shape[0],num=x.shape[0])
     to_expand = [x, y, z]
     for i in range(len(to_expand)):
-        print t.shape, np.ravel(to_expand[i]).shape
         spl = interp1d(t, np.ravel(to_expand[i]))
         to_expand[i] = spl(np.linspace(0,len(t), len(t)*factor))
     new_matrix = np.matrix(np.r_[0:len(t):1.0/factor])
@@ -94,7 +93,6 @@ def get_frame_next(pos, nextpos, offset=0.003, angle=None):
         angle = angle
     else:
         angle = get_angle(pos, nextpos)
-    print angle
     pos[2] -= offset
     # pos[0] += offset/3.0
     rotation = [94.299363207+angle, -4.72728031036, 86.1958002688]
@@ -145,6 +143,38 @@ def calculate_xy_error(desired_pos):
     return np.linalg.norm(actual_pos - desired_pos)
 
 
+### UTILITIES ###
+
+def load_transform_matrix(f0="camera_matrix.p"):
+    f = open(f0)
+    info = pickle.load(f)
+    f.close()
+    return info
+
+def get_pixel_from3D(position, transform, camera_info, offset=(0,0)):
+    Trobot = np.zeros((4,4))
+    Trobot[:3,:] = np.copy(transform)
+    Trobot[3,3] = 1
+    Rrobot = np.linalg.inv(Trobot)
+
+    x = np.ones((4,1))
+
+    x[:3,0] = np.squeeze(position)
+
+    cam_frame = np.dot(Rrobot, x)
+
+    Pcam = np.array(camera_info.P).reshape(3,4)
+
+    V = np.dot(Pcam, cam_frame)
+
+    V = np.array((int(V[0]/V[2]), int(V[1]/V[2])))
+
+    V[0] = V[0] + offset[0]
+    V[1] = V[1] + offset[1]
+
+    return V
+
+
 ### STATES ###
 
 def initial():
@@ -192,7 +222,6 @@ def backtrack(psm1, psm2, pts, angles):
     pts[:,2] += 0.008
     for j in range(pts.shape[0] - 13):
         i = pts.shape[0] - 10 - j
-        print i
         pos = pts[i,:]
         nextpos = pts[i+1,:]
         frame = get_frame_next(np.ravel(pos), np.ravel(nextpos), offset=0.004, angle = angles[i] + 140)
@@ -224,7 +253,6 @@ def cut_second_half(psm1, psm2):
     psm1.move_cartesian_frame(frame)
 
     for i in range(pts.shape[0]-1):
-        print i
         if i != 0:
             cut()
         pos = pts[i,:]
