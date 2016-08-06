@@ -160,7 +160,7 @@ if __name__ == '__main__':
         noisy = True
     else:
         noisy = False
-
+    print "asdf"
     nextpospublisher = rospy.Publisher("/cutting/next_position_cartesian", Pose)
 
     pts = load_robot_points()
@@ -213,8 +213,11 @@ if __name__ == '__main__':
         curpt = np.ravel(np.array(psm1.get_current_cartesian_position().position))
         pts[i,:] = curpt
         pts[i+1,:2] = savgol_filter(pts[:,:2], 5, 2, axis=0)[i+1,:] #probably going to make a small change to this tomorrow
+    
+    cut(-10)
+    cut(-10)
 
-    pts[:,2] += 0.009
+    pts[:,2] += 0.008
     for j in range(pts.shape[0] - 13):
         i = pts.shape[0] - 10 - j
         print i
@@ -271,12 +274,17 @@ if __name__ == '__main__':
             cut()
         pos = pts[i,:]
         nextpos = pts[i+1,:]
-        frame = get_frame_next(np.ravel(pos), np.ravel(nextpos), offset=0.004, angle = angles[i])
+        off = 0.004
+        if i > 4:
+            off = 0.002
+        frame = get_frame_next(np.ravel(pos), np.ravel(nextpos), offset=off, angle = angles[i])
         nextpos = np.ravel(nextpos)
         nextpospublisher.publish(Pose(Point(nextpos[0], nextpos[1], nextpos[2]), frame.orientation))
         psm1.move_cartesian_frame(frame)
         curpt = np.ravel(np.array(psm1.get_current_cartesian_position().position))
         pts[i,:] = curpt
         pts[i+1,:2] = savgol_filter(pts[:,:2], 5, 2, axis=0)[i+1,:] #probably going to make a small change to this tomorrow
+    cut(-10)
+    cut(-10)
 
     exit()
