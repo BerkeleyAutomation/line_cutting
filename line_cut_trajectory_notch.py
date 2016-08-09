@@ -68,7 +68,13 @@ def load_robot_points(fname="calibration_data/gauze_pts.p"):
         except EOFError:
             f3.close()
             return np.matrix(lst)
-
+def reentry_frame():
+    pts=load_robot_points()
+    rotation=[0.46428,0.45636,0.51234,0.56008]
+    return get_frame_psm1(pts[0],rot=rotation)
+def last_pt():
+    pts=load_robot_points()
+    return pts[-1]
 def interpolation(arr, factor):
     """
     Given a matrix of x,y,z coordinates, output a linearly interpolated matrix of coordinates with factor * arr.shape[1] points.
@@ -119,29 +125,38 @@ def grab_gauze():
     """
     f = open("calibration_data/gauze_grab_pt.p")
     pose = pickle.load(f)
+    pose[2] += 0.02
+
     print pose
     tfx_pose = get_frame_psm1(pose)
     psm2.move_cartesian_frame(tfx_pose)
     print "opening"
-    psm2.open_gripper(80)
-    time.sleep(2)
-    pose[2] -= 0.01
+    time.sleep(4)
+    pose[2] -= 0.035
+    pose[1] += 0.008
+    pose[0] -= 0.01
     
     tfx_pose = get_frame_psm1(pose)
     psm2.move_cartesian_frame(tfx_pose)
     print pose
-    psm2.open_gripper(-20)
     print "closing"
+<<<<<<< HEAD
     time.sleep(2)
     pose[2] += 0.005
     print pose
     tfx_pose = get_frame_psm1(pose)
     psm2.move_cartesian_frame(tfx_pose)
     print psm2.get_current_cartesian_position()
+=======
+    # pose[2] += 0.005
+    # print pose
+    # tfx_pose = get_frame_psm1(pose)
+    # psm2.move_cartesian_frame(tfx_pose)
+    # print psm2.get_current_cartesian_position()
+>>>>>>> 6f6b29bb1fed283af9b6482ecf15a9e3cbdb39cb
 
 
 def home_psm2():
-    psm2.open_gripper(50)
     pos = [-0.0800820928439, 0.0470152232648, -0.063244568979]
     rot = [0.127591711166, 0.986924435718, 0.0258944271904, -0.0950262703941]
     pose = get_frame_psm1(pos, rot)
@@ -157,9 +172,13 @@ def exit():
     time.sleep(2)
     psm1.open_gripper(15)
     time.sleep(2)
+<<<<<<< HEAD
     psm1.move_cartesian_frame(get_frame_psm1(psm1.get_current_cartesian_position().position))
     time.sleep(2)
     notch.psm1_translation((0, 0, 0.02), psm1, psm1.get_current_cartesian_position().orientation)
+=======
+    notch.psm1_translation((0, 0.0, 0.02), psm1, psm1.get_current_cartesian_position().orientation)
+>>>>>>> 6f6b29bb1fed283af9b6482ecf15a9e3cbdb39cb
     home_robot()
 
 
@@ -187,8 +206,13 @@ if __name__ == '__main__':
     psm2 = robot("PSM2")
 
     initialize(pts)
+<<<<<<< HEAD
     home_psm2()
     grab_gauze()
+=======
+    # grab_gauze()
+
+>>>>>>> 6f6b29bb1fed283af9b6482ecf15a9e3cbdb39cb
     angles = []
     for i in range(pts.shape[0]-1):
         pos = pts[i,:]
@@ -206,6 +230,12 @@ if __name__ == '__main__':
     notch.cut_notch(pt, psm1)
     time.sleep(3)
 
+    # for i in range(15):
+    #     notch.psm1_translation((.003, 0, 0.0), psm1, psm1.get_current_cartesian_position().orientation)
+    #     cut()
+    # for i in range(15):
+    #     notch.psm1_translation((-.003, 0, 0.0), psm1, psm1.get_current_cartesian_position().orientation)
+
     if noisy:
         pts[:,:2] += np.random.randn(pts.shape[0], 2) * 0.001
 
@@ -215,7 +245,7 @@ if __name__ == '__main__':
             cut()
         pos = pts[i,:]
         nextpos = pts[i+1,:]
-        frame = get_frame_next(np.ravel(pos), np.ravel(nextpos), offset=0.004, angle = angles[i])
+        frame = get_frame_next(np.ravel(pos), np.ravel(nextpos), offset=0.003, angle = angles[i])
         nextpos = np.ravel(nextpos)
         nextpospublisher.publish(Pose(Point(nextpos[0], nextpos[1], nextpos[2]), frame.orientation))
 
@@ -228,7 +258,9 @@ if __name__ == '__main__':
     exit()
 
     pts = load_robot_points(fname="calibration_data/gauze_pts2.p")
+    # if(last_pt()[0,1]>pts[-1,1]):
 
+        # pts[-1]=last_pt()
     factor = 4
 
     pts = interpolation(pts, factor)
@@ -239,7 +271,6 @@ if __name__ == '__main__':
 
     psm1 = robot("PSM1")
     psm2 = robot("PSM2")
-
     initialize(pts)
 
     angles = []
@@ -253,21 +284,35 @@ if __name__ == '__main__':
         angles[i] = 0.5 * angles[i] + 0.35 * angles[i+1] + 0.15 * angles[i+2]
     angles = savgol_filter(angles, factor * (pts.shape[0]/12) + 1, 2)
 
-    frame = get_frame_next(np.ravel(pts[0,:]), np.ravel(pts[1,:]), offset=0.004, angle = angles[0])
-    psm1.move_cartesian_frame(frame)
+    # frame = get_frame_next(np.ravel(pts[0,:]), np.ravel(pts[1,:]), offset=0.004, angle = angles[0])
+    # psm1.move_cartesian_frame(frame)
+    # psm1.move_cartesian_frame(reentry_frame())
+    grab_gauze()
     notch.cut_notch(pts[0,:], psm1)
+<<<<<<< HEAD
     time.sleep(3)
     home_psm2()
+=======
+    notch.psm1_translation((0, 0, 0.004), psm1, psm1.get_current_cartesian_position().orientation)
+
+    time.sleep(3)
+    notch.psm1_translation((-.003, 0, 0.0), psm1, psm1.get_current_cartesian_position().orientation)
+>>>>>>> 6f6b29bb1fed283af9b6482ecf15a9e3cbdb39cb
     if noisy:
         pts[:,:2] += np.random.randn(pts.shape[0], 2) * 0.001
+
+
+
 
     for i in range(pts.shape[0]-1):
         print i
         if i != 0:
             cut()
+        if i == 8:
+            home_psm2()
         pos = pts[i,:]
         nextpos = pts[i+1,:]
-        frame = get_frame_next(np.ravel(pos), np.ravel(nextpos), offset=0.004, angle = angles[i])
+        frame = get_frame_next(np.ravel(pos), np.ravel(nextpos), offset=0.003, angle = angles[i])
         nextpos = np.ravel(nextpos)
         nextpospublisher.publish(Pose(Point(nextpos[0], nextpos[1], nextpos[2]), frame.orientation))
         psm1.move_cartesian_frame(frame)
