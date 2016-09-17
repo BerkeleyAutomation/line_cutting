@@ -17,6 +17,8 @@ from image_saver import ImageSaver
 import least_square_circle as sqcirc
 from mpl_toolkits.mplot3d import Axes3D
 from ImageSubscriber import ImageSubscriber
+from math import *
+from scipy.spatial import ConvexHull
 	
 def process_img(fname):
 	""" converts image to a binary img and thins a little"""
@@ -47,64 +49,124 @@ def get_raw_points(img):
 				x.append(i)
 				y.append(j)
 	return pts,x,y
-def center_and_radius(x,y):
-	#finds radius and center based on circular regression
-	x,y,R,residu= sqcirc.leastsq_circle(x,y)
-	return x,y,R
+
+		
 
 
-def get_circle(x,y,R):
-	#uses radius and center to make 100 points to define the circle
-	top=np.linspace(0,np.pi)
-	bottom=np.linspace(0,-np.pi)
-	topx,topy=R*np.cos(top)+x,R*np.sin(top)+y
-	bottomx,bottomy=R*np.cos(bottom)+x,R*np.sin(bottom)+y
-	return topx,topy,bottomx,bottomy
 
 
-def fit_plane(topx,topy,botx,boty,scale=.5,z=69):#scale and z needs to be experimentally gotten
+def neighbours(x,y,image):
+    """Return 8-neighbours of image point P1(x,y), in a clockwise order"""
+    img = image
+    x_1, y_1, x1, y1 = x-1, y-1, x+1, y+1
+    return [ img[x_1][y], img[x_1][y1], img[x][y1], img[x1][y1],     # P2,P3,P4,P5
+                img[x1][y], img[x1][y_1], img[x][y_1], img[x_1][y_1] ]    # P6,P7,P8,P9
+
+def transitions(neighbours):
+    """No. of 0,1 patterns (transitions from 0 to 1) in the ordered sequence"""
+    n = neighbours + neighbours[0:1]      # P2, P3, ... , P8, P9, P2
+    return sum( (n1, n2) == (0, 1) for n1, n2 in zip(n, n[1:]) )  # (P2,P3), (P3,P4), ... , (P8,P9), (P9,P2)
+
+
+def zhangSuen(image):
+    """the Zhang-Suen Thinning Algorithm"""
+    Image_Thinned = image.copy()  # deepcopy to protect the original image
+    changing1 = changing2 = 1        #  the points to be removed (set as 0)
+    while changing1 or changing2:   #  iterates until no further changes occur in the image
+        # Step 1
+        changing1 = []
+        rows, columns = Image_Thinned.shape               # x for rows, y for columns
+        for x in range(1, rows - 1):                     # No. of  rows
+            for y in range(1, columns - 1):            # No. of columns
+                P2,P3,P4,P5,P6,P7,P8,P9 = n = neighbours(x, y, Image_Thinned)
+                if (Image_Thinned[x][y] == 1     and    # Condition 0: Point P1 in the object regions 
+                    2 <= sum(n) <= 6   and    # Condition 1: 2<= N(P1) <= 6
+                    transitions(n) == 1 and    # Condition 2: S(P1)=1  
+                    P2 * P4 * P6 == 0  and    # Condition 3   
+                    P4 * P6 * P8 == 0):         # Condition 4
+                    changing1.append((x,y))
+        for x, y in changing1: 
+            Image_Thinned[x][y] = 0
+        # Step 2
+        changing2 = []
+        for x in range(1, rows - 1):
+            for y in range(1, columns - 1):
+                P2,P3,P4,P5,P6,P7,P8,P9 = n = neighbours(x, y, Image_Thinned)
+                if (Image_Thinned[x][y] == 1   and        # Condition 0
+                    2 <= sum(n) <= 6  and       # Condition 1
+                    transitions(n) == 1 and      # Condition 2
+                    P2 * P4 * P8 == 0 and       # Condition 3
+                    P2 * P6 * P8 == 0):            # Condition 4
+                    changing2.append((x,y))    
+        for x, y in changing2: 
+            Image_Thinned[x][y] = 0
+    return Image_Thinned
+
+def fit_plane(x,y,scale=.5,z=69):#scale and z needs to be experimentally gotten
 	"""fits to the frame of the robot and the plane of the gauss"""
-	top_pts=[]
-	bot_pts=[]
-	for i in range(topx.size):
-		top_pts.append([topx[i]*scale,topy[i]*scale,z])
-		bot_pts.append([botx[i]*scale,boty[i]*scale,z])
+	traj=[]
+	for i in range(len(x)):
+		traj.append([x[i],y[i],z])
+	return traj,x,y,z
 
-	top,bot=np.matrix(top_pts),np.matrix(bot_pts)
-	return top,bot
+def plot_points(x,y,z,centroid):
+	
+	# fig = plt.figure()
+	# ax = fig.add_subplot(111, projection='3d') 
+	# ax.scatter(x,y,z)
+	plt.plot(x,y)
+	plt.scatter(centroid[0],centroid[1],color='r')
+	plt.show()
 
-def plot_points(top,bottom):
-	
-	fig = plt.figure()
-	ax = fig.add_subplot(111, projection='3d') 
-	ax.scatter(np.array(top[:,0]),np.array(top[:,1]),np.array(top[:,2]))
-	ax.scatter(np.array(bottom[:,0]),np.array(bottom[:,1]),np.array(bottom[:,2]))
-	plt.show()
-def main():
-	a=ImageSubscriber()
-	cv2.imwrite('image_utils/left1.jpg',a.left_image)
-	processed=process_img('image_utils/left1.jpg')
-	#processed=process_img('image_utils/right1.jpg')
-	cv2.imshow('processed',processed)
-	print processed.shape
-	cv2.waitKey(0)
-	cv2.destroyAllWindows()
-	pts,x,y=get_raw_points(processed)
-	xc,yc,R=center_and_radius(x,y)
-	print "raw radius=",R
-	topx,topy,botx,boty=get_circle(xc,yc,R)
-	plt.axis([0,500,0,500])
-	plt.scatter(x,y,color='b')
-	plt.scatter(topx,topy,c='r')
-	plt.scatter(botx,boty,c='r')
-	plt.show()
-	top,bottom=fit_plane(topx,topy,botx,boty)
-	np.savetxt('debug.txt',top)
-	plot_points(top,bottom)
-	
-	
-	
+def centroid(pts):
+	# pts=np.array(pts)
+	return np.array([(sum(pts[:,0])/len(pts[:,0])),(sum(pts[:,1])/len(pts[:,1]))])
+def angle_calc(pt1,pt2):
+	x1,y1=pt1[0],pt1[1]
+	x2,y2=pt2[0],pt2[1]
+	return atan2(x2-x1,y2-y1)
+
+# def reorganize(pts,centroid):
+# 	angle=0
+# 	count=0
+# 	new_pts=[]
+# 	print pts
+# 	while angle<6.3:
+# 		for i in range(len(pts)):
+# 			measured=round(angle_calc(centroid,pts[i]),3)
+			
+# 			if measured==angle:
+# 				#print measured
+# 				new_pts.append([pts[i,0],pts[i,1]])
+# 		angle+=.005
+		
+
+# 	return np.array(new_pts)
 
 
 if __name__ == '__main__':
-	main()
+		# a=ImageSubscriber()
+	
+	processed=process_img('image_utils/left5.jpg')
+	# processed=process_img('image_utils/right1.jpg')
+	
+	# edges = cv2.Canny(processed,0,255)
+	thinned=zhangSuen(processed)
+	cv2.imshow('processed',thinned)
+
+
+	print processed.shape
+	cv2.waitKey(5)
+	cv2.destroyAllWindows()
+	pts,x,y =get_raw_points(thinned)
+	pts=np.array(pts)
+	centroid=centroid(pts)
+	print centroid
+
+	pts=pts[ConvexHull(pts).vertices]
+	traj,x,y,z =fit_plane(x,y)
+	# print pts
+	
+
+	plot_points(pts[:,0],pts[:,1],z,centroid)
+	
