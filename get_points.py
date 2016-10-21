@@ -20,7 +20,7 @@ from ImageSubscriber import ImageSubscriber
 	
 def process_img(fname):
 	""" converts image to a binary img and thins a little"""
-	img = cv2.imread(fname,1)
+	#img = cv2.imread(fname,1)
 	resized=cv2.resize(img,None,fx=.5, fy=.5, interpolation = cv2.INTER_CUBIC)
 
 	print resized.shape
@@ -81,7 +81,7 @@ def plot_points(top,bottom):
 	ax.scatter(np.array(bottom[:,0]),np.array(bottom[:,1]),np.array(bottom[:,2]))
 	plt.show()
 def main():
-	a=ImageSubscriber()
+	a=ImageSubscriber(AD=True)
 	cv2.imwrite('image_utils/left1.jpg',a.left_image)
 	processed=process_img('image_utils/left1.jpg')
 	#processed=process_img('image_utils/right1.jpg')
