@@ -21,8 +21,8 @@ This file contains utilities that are used for a trajectory following curve cutt
 
 
 def home_robot():
-    pos1 = [0.023580864372, 0.00699340564912, -0.0485527311586]
-    psm1.move_cartesian_frame(get_frame_psm1(pos1))
+    pos = [0.023580864372, 0.00699340564912, -0.0485527311586]
+    psm1.move_cartesian_frame(get_frame_psm1(pos))
     time.sleep(1)
 
 def initialize(pts):
@@ -30,7 +30,6 @@ def initialize(pts):
     Initialize both arms to a fixed starting position/rotation.
     """
     home_robot()
-    
     return
 
 def get_frame_psm1(pos, rot=[0.617571885272, 0.59489495214, 0.472153066551, 0.204392867261]):
@@ -68,13 +67,7 @@ def load_robot_points(fname="calibration_data/gauze_pts.p"):
         except EOFError:
             f3.close()
             return np.matrix(lst)
-def reentry_frame():
-    pts=load_robot_points()
-    rotation=[0.46428,0.45636,0.51234,0.56008]
-    return get_frame_psm1(pts[0],rot=rotation)
-def last_pt():
-    pts=load_robot_points()
-    return pts[-1]
+
 def interpolation(arr, factor):
     """
     Given a matrix of x,y,z coordinates, output a linearly interpolated matrix of coordinates with factor * arr.shape[1] points.
@@ -85,7 +78,6 @@ def interpolation(arr, factor):
     t = np.linspace(0,x.shape[0],num=x.shape[0])
     to_expand = [x, y, z]
     for i in range(len(to_expand)):
-        print t.shape, np.ravel(to_expand[i]).shape
         spl = interp1d(t, np.ravel(to_expand[i]))
         to_expand[i] = spl(np.linspace(0,len(t), len(t)*factor))
     new_matrix = np.matrix(np.r_[0:len(t):1.0/factor])
@@ -101,7 +93,6 @@ def get_frame_next(pos, nextpos, offset=0.003, angle=None):
         angle = angle
     else:
         angle = get_angle(pos, nextpos)
-    print angle
     pos[2] -= offset
     # pos[0] += offset/3.0
     rotation = [94.299363207+angle, -4.72728031036, 86.1958002688]
@@ -125,31 +116,22 @@ def grab_gauze():
     """
     f = open("calibration_data/gauze_grab_pt.p")
     pose = pickle.load(f)
-    pose[2] += 0.02
-
-    print pose
-    tfx_pose = get_frame_psm1(pose)
+    tfx_pose = get_frame_psm1(pose[:3], pose[3:])
     psm2.move_cartesian_frame(tfx_pose)
-    print "opening"
-    time.sleep(4)
-    pose[2] -= 0.035
-    pose[1] += 0.008
-    pose[0] -= 0.01
-    
-    tfx_pose = get_frame_psm1(pose)
-    psm2.move_cartesian_frame(tfx_pose)
-    print pose
-    print "closing"
+    psm2.open_gripper(80)
     time.sleep(2)
-    pose[2] += 0.005
-    print pose
-    tfx_pose = get_frame_psm1(pose)
+    pose[2] -= 0.01
+    tfx_pose = get_frame_psm1(pose[:3], pose[3:])
     psm2.move_cartesian_frame(tfx_pose)
-    print psm2.get_current_cartesian_position()
-
-
+    psm2.open_gripper(-30)
+    time.sleep(2)
+    pose[2] += 0.01
+    tfx_pose = get_frame_psm1(pose[:3], pose[3:])
+    psm2.move_cartesian_frame(tfx_pose)
+    time.sleep(2)
 
 def home_psm2():
+    psm2.open_gripper(50)
     pos = [-0.0800820928439, 0.0470152232648, -0.063244568979]
     rot = [0.127591711166, 0.986924435718, 0.0258944271904, -0.0950262703941]
     pose = get_frame_psm1(pos, rot)
@@ -160,115 +142,101 @@ def calculate_xy_error(desired_pos):
     actual_pos = np.ravel(np.array(psm1.get_current_cartesian_position().position))[:2]
     return np.linalg.norm(actual_pos - desired_pos)
 
-def exit():
-    psm1.close_gripper()
-    time.sleep(2)
-    psm1.open_gripper(15)
-    time.sleep(2)
-    psm1.move_cartesian_frame(get_frame_psm1(psm1.get_current_cartesian_position().position))
-    time.sleep(2)
-    notch.psm1_translation((0, 0, 0.02), psm1, psm1.get_current_cartesian_position().orientation)
 
+### UTILITIES ###
+
+def load_transform_matrix(f0="camera_matrix.p"):
+    f = open(f0)
+    info = pickle.load(f)
+    f.close()
+    return info
+
+def get_pixel_from3D(position, transform, camera_info, offset=(0,0)):
+    Trobot = np.zeros((4,4))
+    Trobot[:3,:] = np.copy(transform)
+    Trobot[3,3] = 1
+    Rrobot = np.linalg.inv(Trobot)
+
+    x = np.ones((4,1))
+
+    x[:3,0] = np.squeeze(position)
+
+    cam_frame = np.dot(Rrobot, x)
+
+    Pcam = np.array(camera_info.P).reshape(3,4)
+
+    V = np.dot(Pcam, cam_frame)
+
+    V = np.array((int(V[0]/V[2]), int(V[1]/V[2])))
+
+    V[0] = V[0] + offset[0]
+    V[1] = V[1] + offset[1]
+
+    return V
+
+
+### STATES ###
+
+def initial():
     home_robot()
 
-
-if __name__ == '__main__':
-
-    if len(sys.argv) >= 1 and sys.argv[1] == "noisy":
-        print "adding gaussian noise"
-        noisy = True
-    else:
-        noisy = False
-
-    nextpospublisher = rospy.Publisher("/cutting/next_position_cartesian", Pose)
-
-    pts = load_robot_points()
-
-    factor = 4
-
-    pts = interpolation(pts, factor)
-
-
-
-    print pts.shape
-
-    psm1 = robot("PSM1")
-    psm2 = robot("PSM2")
-
-<<<<<<< HEAD
-    initialize(pts)
-    home_psm2()
-    grab_gauze()
+def notch_cut(psm1, psm2, pts):
+    home_robot()
     angles = []
     for i in range(pts.shape[0]-1):
         pos = pts[i,:]
         nextpos = pts[i+1,:]
         angle = get_angle(np.ravel(pos), np.ravel(nextpos))
         angles.append(angle)
-=======
-    # initialize(pts)
-    # # grab_gauze()
 
-    # angles = []
-    # for i in range(pts.shape[0]-1):
-    #     pos = pts[i,:]
-    #     nextpos = pts[i+1,:]
-    #     angle = get_angle(np.ravel(pos), np.ravel(nextpos))
-    #     angles.append(angle)
->>>>>>> 24890bb101df43413d6cad9e4766b78455d10ff7
+    for i in range(len(angles)-2):
+        angles[i] = 0.5 * angles[i] + 0.35 * angles[i+1] + 0.15 * angles[i+2]
+    angles = savgol_filter(angles, factor * (pts.shape[0]/12) + 1, 2)
 
-    # for i in range(len(angles)-2):
-    #     angles[i] = 0.5 * angles[i] + 0.35 * angles[i+1] + 0.15 * angles[i+2]
-    # angles = savgol_filter(angles, factor * (pts.shape[0]/12) + 1, 2)
+    frame = get_frame_next(np.ravel(pts[0,:]), np.ravel(pts[1,:]), offset=0.004, angle = angles[0])
+    psm1.move_cartesian_frame(frame)
+    pt = pts[0,:]
+    notch.cut_notch(pt, psm1)
+    time.sleep(2)
+    return angles
 
-    # frame = get_frame_next(np.ravel(pts[0,:]), np.ravel(pts[1,:]), offset=0.004, angle = angles[0])
-    # psm1.move_cartesian_frame(frame)
-    # pt = pts[0,:]
-    # notch.cut_notch(pt, psm1)
-    # time.sleep(3)
+def cut_first_half(psm1, psm2, pts, angles):
+    for i in range(pts.shape[0]-1):
+        if i != 0:
+            cut()
+        pos = pts[i,:]
+        nextpos = pts[i+1,:]
+        frame = get_frame_next(np.ravel(pos), np.ravel(nextpos), offset=0.004, angle = angles[i])
+        nextpos = np.ravel(nextpos)
+        nextpospublisher.publish(Pose(Point(nextpos[0], nextpos[1], nextpos[2]), frame.orientation))
 
-    # # for i in range(15):
-    # #     notch.psm1_translation((.003, 0, 0.0), psm1, psm1.get_current_cartesian_position().orientation)
-    # #     cut()
-    # # for i in range(15):
-    # #     notch.psm1_translation((-.003, 0, 0.0), psm1, psm1.get_current_cartesian_position().orientation)
+        psm1.move_cartesian_frame(frame)
 
-    # if noisy:
-    #     pts[:,:2] += np.random.randn(pts.shape[0], 2) * 0.001
+        curpt = np.ravel(np.array(psm1.get_current_cartesian_position().position))
+        pts[i,:] = curpt
+        pts[i+1,:2] = savgol_filter(pts[:,:2], 5, 2, axis=0)[i+1,:]
+    cut(-10)
+    cut(-10)
 
-    # for i in range(pts.shape[0]-1):
-    #     print i
-    #     if i != 0:
-    #         cut()
-    #     pos = pts[i,:]
-    #     nextpos = pts[i+1,:]
-    #     frame = get_frame_next(np.ravel(pos), np.ravel(nextpos), offset=0.003, angle = angles[i])
-    #     nextpos = np.ravel(nextpos)
-    #     nextpospublisher.publish(Pose(Point(nextpos[0], nextpos[1], nextpos[2]), frame.orientation))
+def backtrack(psm1, psm2, pts, angles):
+    pts[:,2] += 0.008
+    for j in range(pts.shape[0] - 13):
+        i = pts.shape[0] - 10 - j
+        pos = pts[i,:]
+        nextpos = pts[i+1,:]
+        frame = get_frame_next(np.ravel(pos), np.ravel(nextpos), offset=0.004, angle = angles[i] + 140)
+        nextpos = np.ravel(nextpos)
 
-    #     psm1.move_cartesian_frame(frame)
+        psm1.move_cartesian_frame(frame)
+        if j % 4 == 0:
+            cut(-10.0)
 
-    #     curpt = np.ravel(np.array(psm1.get_current_cartesian_position().position))
-    #     pts[i,:] = curpt
-    #     pts[i+1,:2] = savgol_filter(pts[:,:2], 5, 2, axis=0)[i+1,:] #probably going to make a small change to this tomorrow
+    cut(-10.0)
 
-    # exit()
-
+def cut_second_half(psm1, psm2):
     pts = load_robot_points(fname="calibration_data/gauze_pts2.p")
-    # if(last_pt()[0,1]>pts[-1,1]):
-
-        # pts[-1]=last_pt()
     factor = 4
-
     pts = interpolation(pts, factor)
-
-
-
-    print pts.shape
-
-    psm1 = robot("PSM1")
-    psm2 = robot("PSM2")
-    initialize(pts)
 
     angles = []
     for i in range(pts.shape[0]-1):
@@ -281,36 +249,61 @@ if __name__ == '__main__':
         angles[i] = 0.5 * angles[i] + 0.35 * angles[i+1] + 0.15 * angles[i+2]
     angles = savgol_filter(angles, factor * (pts.shape[0]/12) + 1, 2)
 
-    # frame = get_frame_next(np.ravel(pts[0,:]), np.ravel(pts[1,:]), offset=0.004, angle = angles[0])
-    # psm1.move_cartesian_frame(frame)
-    psm1.move_cartesian_frame(reentry_frame())
-    notch.cut_notch(reentry_frame().position,psm1)
-    # grab_gauze()
-    # notch.cut_notch(pts[0,:], psm1)
-    # notch.psm1_translation((0, 0, 0.004), psm1, psm1.get_current_cartesian_position().orientation)
-
-    time.sleep(3)
-    notch.psm1_translation((-.003, 0, 0.0), psm1, psm1.get_current_cartesian_position().orientation)
-    if noisy:
-        pts[:,:2] += np.random.randn(pts.shape[0], 2) * 0.001
-
-
-
+    frame = get_frame_next(np.ravel(pts[0,:]), np.ravel(pts[1,:]), offset=0.004, angle = angles[0])
+    psm1.move_cartesian_frame(frame)
 
     for i in range(pts.shape[0]-1):
-        print i
         if i != 0:
             cut()
-        if i == 8:
-            home_psm2()
         pos = pts[i,:]
         nextpos = pts[i+1,:]
-        frame = get_frame_next(np.ravel(pos), np.ravel(nextpos), offset=0.003, angle = angles[i])
+        off = 0.004
+        if i > 4:
+            off = 0.002
+        frame = get_frame_next(np.ravel(pos), np.ravel(nextpos), offset=off, angle = angles[i])
         nextpos = np.ravel(nextpos)
         nextpospublisher.publish(Pose(Point(nextpos[0], nextpos[1], nextpos[2]), frame.orientation))
         psm1.move_cartesian_frame(frame)
         curpt = np.ravel(np.array(psm1.get_current_cartesian_position().position))
         pts[i,:] = curpt
         pts[i+1,:2] = savgol_filter(pts[:,:2], 5, 2, axis=0)[i+1,:] #probably going to make a small change to this tomorrow
+    cut(-10)
+    cut(-10)
 
+def exit():
+    psm1.close_gripper()
+    time.sleep(2)
+    psm1.open_gripper(15)
+    time.sleep(2)
+    notch.psm1_translation((0, 0, 0.02), psm1, psm1.get_current_cartesian_position().orientation)
+    home_robot()
+
+
+if __name__ == '__main__':
+
+    nextpospublisher = rospy.Publisher("/cutting/next_position_cartesian", Pose)
+    pts = load_robot_points()
+    factor = 4
+    pts = interpolation(pts, factor)
+
+    psm1 = robot("PSM1")
+    psm2 = robot("PSM2")
+
+    cur_state = "Home"
+
+    initial()
+
+    cur_state = "Notching"
+    angles = notch_cut(psm1, psm2, pts)
+
+    cur_state = "First Half"
+    cut_first_half(psm1, psm2, pts, angles)
+
+    cur_state = "Backtracking"
+    backtrack(psm1, psm2, pts, angles)
+
+    cur_state = "Second Half"
+    cut_second_half(psm1, psm2)
+
+    cur_state = "Home"
     exit()
