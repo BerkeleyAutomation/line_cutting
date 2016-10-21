@@ -17,9 +17,11 @@ from image_saver import ImageSaver
 import least_square_circle as sqcirc
 from mpl_toolkits.mplot3d import Axes3D
 from ImageSubscriber import ImageSubscriber
+<<<<<<< HEAD
 from math import *
 from scipy.spatial import ConvexHull
 	
+
 def process_img(fname):
 	""" converts image to a binary img and thins a little"""
 	img = cv2.imread(fname,1)
@@ -117,6 +119,7 @@ def plot_points(x,y,z,centroid):
 	plt.plot(x,y)
 	plt.scatter(centroid[0],centroid[1],color='r')
 	plt.show()
+<<<<<<< HEAD
 
 def centroid(pts):
 	# pts=np.array(pts)
@@ -146,6 +149,7 @@ def angle_calc(pt1,pt2):
 
 if __name__ == '__main__':
 		# a=ImageSubscriber()
+
 	
 	processed=process_img('image_utils/left5.jpg')
 	# processed=process_img('image_utils/right1.jpg')
