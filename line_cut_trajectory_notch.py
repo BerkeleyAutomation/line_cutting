@@ -195,7 +195,7 @@ if __name__ == '__main__':
     psm1 = robot("PSM1")
     psm2 = robot("PSM2")
 
-<<<<<<< HEAD
+
     initialize(pts)
     home_psm2()
     grab_gauze()
@@ -205,17 +205,7 @@ if __name__ == '__main__':
         nextpos = pts[i+1,:]
         angle = get_angle(np.ravel(pos), np.ravel(nextpos))
         angles.append(angle)
-=======
-    # initialize(pts)
-    # # grab_gauze()
 
-    # angles = []
-    # for i in range(pts.shape[0]-1):
-    #     pos = pts[i,:]
-    #     nextpos = pts[i+1,:]
-    #     angle = get_angle(np.ravel(pos), np.ravel(nextpos))
-    #     angles.append(angle)
->>>>>>> 24890bb101df43413d6cad9e4766b78455d10ff7
 
     # for i in range(len(angles)-2):
     #     angles[i] = 0.5 * angles[i] + 0.35 * angles[i+1] + 0.15 * angles[i+2]

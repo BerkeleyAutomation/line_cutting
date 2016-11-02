@@ -25,14 +25,14 @@ class Experiment:
 	
 
 	def translation(self,translation):
-    """
-    Translates PSM1 by (x, y, z)
-    """
-    pos = self.initial_position
-    pos[0] += translation[0]
-    pos[1] += translation[1]
-    pos[2] += translation[2]
-    self.robot.move_cartesian_frame(get_frame(pos))
+	    """
+	    Translates PSM1 by (x, y, z)
+	    """
+	    pos = self.initial_position.position
+	    pos[0] += translation[0]
+	    pos[1] += translation[1]
+	    pos[2] += translation[2]
+	    self.robot.move_cartesian_frame(get_frame(pos,self.initial_position.orientation))
 	def move(self,u):
 		self.u=u
 		self.translation(u)
@@ -45,31 +45,34 @@ class Experiment:
 		self.data.append((xf,u,xi))
 	def reset(self):
 		self.robot.move_cartesian_frame(self.initial_position)
-def grab_gauze(robot):
+def grab_gauze(ex):
 	
-    pose=psm2.get_current_cartesian_position()
-    pose[2] += 0.02
-
-    print pose
-    tfx_pose = get_frame_psm1(pose)
-    psm2.move_cartesian_frame(tfx_pose)
+    pose= ex.initial_position.position
+    rot=ex.initial_position.orientation
+    pose[2] -= 0.02
+    psm2.open_gripper(80.0)
     print "opening"
-    time.sleep(4)
-    pose[2] -= 0.035
-    pose[1] += 0.008
-    pose[0] -= 0.01
-    
-    tfx_pose = get_frame_psm1(pose)
-    psm2.move_cartesian_frame(tfx_pose)
     print pose
+    tfx_pose = get_frame(pose,rot)
+    psm2.move_cartesian_frame(tfx_pose,)
+    time.sleep(1)
+    
+    time.sleep(3)
+    psm2.open_gripper(2.0)
+    print "closing"
+    time.sleep(4)
+    
+    
+    
     print "closing"
 if __name__ == '__main__':
 	psm2=robot("PSM2")
-	psm2.grab_gauze()
 	ex=Experiment(psm2)
-	for i in range(10):
-		ex.track()
-		time.sleep(3)
-		ex.reset()
+	grab_gauze(ex)
+	
+	# for i in range(10):
+	# 	ex.track()
+	# 	time.sleep(3)
+	# 	ex.reset()
 
 
