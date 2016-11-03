@@ -2,7 +2,7 @@ import rospy, pickle, time
 from robot import *
 from geometry_msgs.msg import Pose
 import numpy as np
-import PyKDL
+
 import multiprocessing
 import tfx
 import fitplane
@@ -25,14 +25,14 @@ class Experiment:
 	
 
 	def translation(self,translation):
-    """
-    Translates PSM1 by (x, y, z)
-    """
-    pos = self.initial_position
-    pos[0] += translation[0]
-    pos[1] += translation[1]
-    pos[2] += translation[2]
-    self.robot.move_cartesian_frame(get_frame(pos))
+	    """
+	    Translates PSM1 by (x, y, z)
+	    """
+	    pos = self.initial_position
+	    pos[0] += translation[0]
+	    pos[1] += translation[1]
+	    pos[2] += translation[2]
+	    self.robot.move_cartesian_frame(get_frame(pos))
 	def move(self,u):
 		self.u=u
 		self.translation(u)
