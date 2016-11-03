@@ -11,8 +11,8 @@ from shape_tracer import plot_points
 from scipy.signal import savgol_filter
 import matplotlib.pyplot as plt
 from ImageSubscriber import ImageSubscriber
-from blob_detector import *
-from line_detector import *
+#from blob_detector import *
+#from line_detector import *
 
 """
 This file contains utilities that are used for a trajectory following curve cutting model.
@@ -157,10 +157,10 @@ def calculate_xy_error(desired_pos):
 
 if __name__ == '__main__':
 
-    camera = True
+    camera = False
     if not camera:
         pts = load_robot_points()
-        pts = interpolation(pts, factor)
+        pts = interpolation(pts, 4)
     else:
         a = ImageSubscriber()
         time.sleep(3)

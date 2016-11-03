@@ -24,7 +24,7 @@ from scipy.spatial import ConvexHull
 
 def process_img(fname):
 	""" converts image to a binary img and thins a little"""
-	img = cv2.imread(fname,1)
+	#img = cv2.imread(fname,1)
 	resized=cv2.resize(img,None,fx=.5, fy=.5, interpolation = cv2.INTER_CUBIC)
 
 	print resized.shape
@@ -63,7 +63,11 @@ def get_circle(x,y,R):
 	bottomx,bottomy=R*np.cos(bottom)+x,R*np.sin(bottom)+y
 	return topx,topy,bottomx,bottomy
 =======
+<<<<<<< HEAD
 >>>>>>> 97f23979c4035103c1a228e3569b50f18e4b9fbf
+=======
+>>>>>>> 24890bb101df43413d6cad9e4766b78455d10ff7
+>>>>>>> eeb9b14e2405ffc325c5487a368dbaf25719f8ee
 
 
 
@@ -130,6 +134,30 @@ def plot_points(x,y,z,centroid):
 	plt.scatter(centroid[0],centroid[1],color='r')
 	plt.show()
 <<<<<<< HEAD
+def main():
+	a=ImageSubscriber(AD=True)
+	cv2.imwrite('image_utils/left1.jpg',a.left_image)
+	processed=process_img('image_utils/left1.jpg')
+	#processed=process_img('image_utils/right1.jpg')
+	cv2.imshow('processed',processed)
+	print processed.shape
+	cv2.waitKey(0)
+	cv2.destroyAllWindows()
+	pts,x,y=get_raw_points(processed)
+	xc,yc,R=center_and_radius(x,y)
+	print "raw radius=",R
+	topx,topy,botx,boty=get_circle(xc,yc,R)
+	plt.axis([0,500,0,500])
+	plt.scatter(x,y,color='b')
+	plt.scatter(topx,topy,c='r')
+	plt.scatter(botx,boty,c='r')
+	plt.show()
+	top,bottom=fit_plane(topx,topy,botx,boty)
+	np.savetxt('debug.txt',top)
+	plot_points(top,bottom)
+	
+=======
+<<<<<<< HEAD
 
 def centroid(pts):
 	# pts=np.array(pts)
@@ -160,6 +188,7 @@ def angle_calc(pt1,pt2):
 if __name__ == '__main__':
 		# a=ImageSubscriber()
 
+>>>>>>> 24890bb101df43413d6cad9e4766b78455d10ff7
 	
 	processed=process_img('image_utils/left5.jpg')
 	# processed=process_img('image_utils/right1.jpg')

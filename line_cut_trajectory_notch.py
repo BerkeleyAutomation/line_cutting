@@ -140,20 +140,13 @@ def grab_gauze():
     psm2.move_cartesian_frame(tfx_pose)
     print pose
     print "closing"
-<<<<<<< HEAD
     time.sleep(2)
     pose[2] += 0.005
     print pose
     tfx_pose = get_frame_psm1(pose)
     psm2.move_cartesian_frame(tfx_pose)
     print psm2.get_current_cartesian_position()
-=======
-    # pose[2] += 0.005
-    # print pose
-    # tfx_pose = get_frame_psm1(pose)
-    # psm2.move_cartesian_frame(tfx_pose)
-    # print psm2.get_current_cartesian_position()
->>>>>>> 6f6b29bb1fed283af9b6482ecf15a9e3cbdb39cb
+
 
 
 def home_psm2():
@@ -172,13 +165,10 @@ def exit():
     time.sleep(2)
     psm1.open_gripper(15)
     time.sleep(2)
-<<<<<<< HEAD
     psm1.move_cartesian_frame(get_frame_psm1(psm1.get_current_cartesian_position().position))
     time.sleep(2)
     notch.psm1_translation((0, 0, 0.02), psm1, psm1.get_current_cartesian_position().orientation)
-=======
-    notch.psm1_translation((0, 0.0, 0.02), psm1, psm1.get_current_cartesian_position().orientation)
->>>>>>> 6f6b29bb1fed283af9b6482ecf15a9e3cbdb39cb
+
     home_robot()
 
 
@@ -206,24 +196,21 @@ if __name__ == '__main__':
     psm2 = robot("PSM2")
 
 <<<<<<< HEAD
-    initialize(pts)
 <<<<<<< HEAD
+=======
+
+>>>>>>> eeb9b14e2405ffc325c5487a368dbaf25719f8ee
+    initialize(pts)
     home_psm2()
     grab_gauze()
-=======
-    # grab_gauze()
-
->>>>>>> 6f6b29bb1fed283af9b6482ecf15a9e3cbdb39cb
     angles = []
     for i in range(pts.shape[0]-1):
         pos = pts[i,:]
         nextpos = pts[i+1,:]
         angle = get_angle(np.ravel(pos), np.ravel(nextpos))
         angles.append(angle)
-=======
-    # initialize(pts)
-    # # grab_gauze()
 
+<<<<<<< HEAD
     # angles = []
     # for i in range(pts.shape[0]-1):
     #     pos = pts[i,:]
@@ -231,6 +218,8 @@ if __name__ == '__main__':
     #     angle = get_angle(np.ravel(pos), np.ravel(nextpos))
     #     angles.append(angle)
 >>>>>>> 97f23979c4035103c1a228e3569b50f18e4b9fbf
+=======
+>>>>>>> eeb9b14e2405ffc325c5487a368dbaf25719f8ee
 
     # for i in range(len(angles)-2):
     #     angles[i] = 0.5 * angles[i] + 0.35 * angles[i+1] + 0.15 * angles[i+2]
@@ -299,6 +288,7 @@ if __name__ == '__main__':
     # frame = get_frame_next(np.ravel(pts[0,:]), np.ravel(pts[1,:]), offset=0.004, angle = angles[0])
     # psm1.move_cartesian_frame(frame)
 <<<<<<< HEAD
+<<<<<<< HEAD
     # psm1.move_cartesian_frame(reentry_frame())
     grab_gauze()
     notch.cut_notch(pts[0,:], psm1)
@@ -308,16 +298,20 @@ if __name__ == '__main__':
 =======
     notch.psm1_translation((0, 0, 0.004), psm1, psm1.get_current_cartesian_position().orientation)
 =======
+=======
+>>>>>>> eeb9b14e2405ffc325c5487a368dbaf25719f8ee
     psm1.move_cartesian_frame(reentry_frame())
     notch.cut_notch(reentry_frame().position,psm1)
     # grab_gauze()
     # notch.cut_notch(pts[0,:], psm1)
     # notch.psm1_translation((0, 0, 0.004), psm1, psm1.get_current_cartesian_position().orientation)
+<<<<<<< HEAD
 >>>>>>> 97f23979c4035103c1a228e3569b50f18e4b9fbf
+=======
+>>>>>>> eeb9b14e2405ffc325c5487a368dbaf25719f8ee
 
     time.sleep(3)
     notch.psm1_translation((-.003, 0, 0.0), psm1, psm1.get_current_cartesian_position().orientation)
->>>>>>> 6f6b29bb1fed283af9b6482ecf15a9e3cbdb39cb
     if noisy:
         pts[:,:2] += np.random.randn(pts.shape[0], 2) * 0.001
 
