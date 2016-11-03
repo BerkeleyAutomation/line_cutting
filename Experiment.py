@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import notch
 from geometry_msgs.msg import Point
 from line_cut_trajectory_notch import get_frame_psm1 as get_frame
+import blob_detector
 
 class Experiment:
 	def __init__(self,robot):
@@ -22,6 +23,7 @@ class Experiment:
 		self.initial_position=self.robot.get_current_cartesian_position()
 		self.xi=[]
 		self.xf=[]
+		self.camera=ImageSaver()
 	
 
 	def translation(self,translation):
@@ -40,10 +42,10 @@ class Experiment:
 		self.translation(u)
 		
 	def track(self):
-		#xi=get position of every point
+		xi=blob_detector.get_surface(camera.left_image,camera.right_image).pts3d
 		self.move(np.random.randn(3))
 		time.sleep(5)
-		#xf=get position of every point after a move
+		xf=blob_detector.get_surface(camera.left_image,camera.right_image).pts3d
 		self.data.append((xf,u,xi))
 	def reset(self):
 		self.robot.move_cartesian_frame(self.initial_position)
